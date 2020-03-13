@@ -1,0 +1,45 @@
+{
+  "name": "dai-backstop-syndicate",
+  "version": "0.1.0",
+  "description": "A pooled liquidity contract for participating in the upcoming MKR auction at a \"backstop\" price of 1 MKR per 100 Dai.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dharma-eng/dai-backstop-syndicate"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "2.3.0",
+    "ethereumjs-util": "6.1.0",
+    "ethlint": "1.2.5",
+    "js-sha256": "0.9.0",
+    "ganache-cli": "6.7.0",
+    "solhint": "2.3.0",
+    "solidity-coverage": "0.7.1",
+    "truffle": "5.1.4",
+    "web3": "1.2.1"
+  },
+  "devDependencies": {
+    "husky": "^4.2.1",
+    "lint-staged": "^9.2.1",
+    "prettier": "1.16.4",
+    "pretty-quick": "^2.0.1"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/truffle compile",
+    "lint": "./node_modules/.bin/solhint 'contracts/**/*.sol' && ./node_modules/.bin/solium -d ./contracts --no-soliumignore",
+    "start": "./node_modules/.bin/ganache-cli --gasLimit 10000000 -e 10000 2>&1 > ganache-output.log & echo 'local chain started.'",
+    "stop": "kill -9 \"$(ps -ax | grep -m1 '[n]ode ./node_modules/.bin/ganache-cli' | awk '{print $1;}')\" && echo 'local chain stopped.'",
+    "prettier": "prettier --write"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,css,json,md}": [
+      "prettier --debug-check",
+      "prettier --write",
+      "git add"
+    ]
+  }
+}
