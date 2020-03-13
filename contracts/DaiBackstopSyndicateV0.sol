@@ -36,7 +36,7 @@ interface DaiBackstopSyndicateInterface {
 }
 
 
-contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, ERC20 {
+contract DaiBackstopSyndicateV0 is DaiBackstopSyndicateInterface, ERC20 {
   using SafeMath for uint256;
 
   // Track the status of the Syndicate.
