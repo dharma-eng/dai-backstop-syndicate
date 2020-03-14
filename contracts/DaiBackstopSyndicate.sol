@@ -4,6 +4,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+import "./SimpleFlopper.sol";
+
 
 interface DaiBackstopSyndicateInterface {
   enum Status {
@@ -13,10 +15,10 @@ interface DaiBackstopSyndicateInterface {
   }
 
   // Anyone can deposit Dai up until the auctions have started at 1:1
-  function deposit(uint256 daiAmount) external returns (uint256 backstopTokensMinted);
+  function enlist(uint256 daiAmount) external returns (uint256 backstopTokensMinted);
 
-  // Anyone can withdraw at any point (open question how to handle ongoing auctions)
-  function withdraw(uint256 backstopTokenAmount) external returns (uint256 daiRedeemed, uint256 mkrRedeemed);
+  // Anyone can withdraw at any point as long as Dai is not locked in auctions
+  function defect(uint256 backstopTokenAmount) external returns (uint256 daiRedeemed, uint256 mkrRedeemed);
 
   // Anyone can activate the contract once auctions have started, stopping deposits and enabling bids
   function activate() external;
@@ -36,7 +38,7 @@ interface DaiBackstopSyndicateInterface {
 }
 
 
-contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, ERC20 {
+contract DaiBackstopSyndicate is SimpleFlopper, DaiBackstopSyndicateInterface, ERC20 {
   using SafeMath for uint256;
 
   // Track the status of the Syndicate.
@@ -63,7 +65,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, ERC20 {
     _status = Status.ACCEPTING_DEPOSITS;
   }
 
-  function deposit(
+  function enlist(
     uint256 daiAmount
   ) external returns (uint256 backstopTokensMinted) {
     require(
@@ -80,7 +82,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, ERC20 {
     _mint(msg.sender, backstopTokensMinted);
   }
 
-  function withdraw(
+  function defect(
     uint256 backstopTokenAmount
   ) external returns (uint256 daiRedeemed, uint256 mkrRedeemed) {
     // Determine the % ownership. (scaled up by 1e18)
@@ -142,6 +144,11 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, ERC20 {
 
   // Anyone can enter an auction, supplying 50,000 Dai in exchange for 500 MKR
   function enterAuction(uint256 auctionId) external {
+    require(
+      _status == Status.ACTIVATED,
+      "Cannot enter an auction unless this contract is activated."
+    );
+
     // Determine the Dai currently held by the contract.
     uint256 daiBalance = _DAI.balanceOf(address(this));
 
@@ -151,7 +158,10 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, ERC20 {
 
     // TODO: ensure that the auction in question has not already been entered?
 
-    // TODO: enter auction
+    // TODO: ensure that the current bid is not at a higher price than backstop.
+
+    // Enter the auction.
+    _bid(auctionId, 500 * 1e18, 50000 * 1e18);
 
     _activeAuctions = _activeAuctions.add(1);
   }
