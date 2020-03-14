@@ -1,5 +1,5 @@
-pragma solidity ^0.5.12;
-// pragma experimental ABIEncoderV2;
+pragma solidity 0.5.16;
+//pragma experimental ABIEncoderV2;
 
 interface IFlopper {
     // --- Auth ---
@@ -20,7 +20,7 @@ interface IFlopper {
     }
 
     // Bid objects
-    function bids(uint256) external view returns (Bid);
+    function bids(uint256) public view returns (Bid);
 
     // DAI contract address
     function vat() external view returns (address);
@@ -94,15 +94,4 @@ interface IFlopper {
     // access control: authed
     // state machine: after shutdown
     function yank(uint256 id) external;
-}
-
-contract Vow {
-    // flop delay
-    function wait() external view returns (uint256);
-    // flop starting amount of MKR offered (18 decimal places)
-    function dump() external view returns (uint256);
-    // flop fixed debt quantity to be covered (45 decimal places)
-    function sump() external view returns (uint256);
-    // start flop auction
-    function flop() external returns (uint id);
 }
