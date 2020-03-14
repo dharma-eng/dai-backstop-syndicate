@@ -1,16 +1,7 @@
-pragma solidity =0.5.12;
+pragma solidity ^0.5.12;
+// pragma experimental ABIEncoderV2;
 
-contract LibNote {
-    event LogNote(
-        bytes4 indexed sig,
-        address indexed usr,
-        bytes32 indexed arg1,
-        bytes32 indexed arg2,
-        bytes data
-    );
-}
-
-contract Flopper is LibNote {
+interface IFlopper {
     // --- Auth ---
     // caller authorization (1 = authorized, 0 = not authorized)
     function wards(address) external view returns (uint256);
@@ -39,13 +30,13 @@ contract Flopper is LibNote {
     // num decimals (constant)
     function ONE() external pure returns (uint256);
 
-    // minimum bid increase (variable - 5% initial)
+    // minimum bid increase (config - 5% initial)
     function beg() external view returns (uint256);
-    // minimum lot increase (variable - 50% initial)
+    // initial lot increase (config - 50% initial)
     function pad() external view returns (uint256);
-    // single bid lifetime (variable - 3 hours initial)
+    // bid lifetime (config - 3 hours initial)
     function ttl() external view returns (uint48);
-    // total auction length (variable - 2 days initial)
+    // total auction length (config - 2 days initial)
     function tau() external view returns (uint48);
 
     // number of auctions
