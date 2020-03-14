@@ -1,6 +1,7 @@
 pragma solidity 0.5.16;
 
-import "./IFlopper.sol";
+import "../interfaces/IFlopper.sol";
+
 
 contract SimpleFlopper {
 
@@ -27,13 +28,13 @@ contract SimpleFlopper {
 
   /// @notice Get the address of the MKR token
   /// @return MKR address of maker token
-  function getMKRAddress() public view returns (address MKR) {
+  function getMKRAddress() public view returns (address mkr) {
     return _auction.gem();
   }
 
   /// @notice Get the address of the DAI token
   /// @return DAI address of maker token
-  function getDaiAddress() public view returns (address DAI) {
+  function getDaiAddress() public view returns (address dai) {
     return _auction.vat();
   }
 
