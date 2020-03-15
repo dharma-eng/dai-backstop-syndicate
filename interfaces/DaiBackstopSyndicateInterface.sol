@@ -28,5 +28,5 @@ interface DaiBackstopSyndicateInterface {
 
   function getStatus() external view returns (Status status);
 
-  function getActiveAuctions() external view returns (uint256 activeAuctions);
+  function getActiveAuctions() external view returns (uint256[] memory activeAuctions);
 }
