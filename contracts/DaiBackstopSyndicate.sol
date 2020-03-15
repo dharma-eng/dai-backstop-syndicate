@@ -31,6 +31,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   // The backstop price is 100 Dai for 1 MKR.
   uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
 
+
   IERC20 internal constant _DAI = IERC20(
     0x6B175474E89094C44Da98b954EedeAC495271d0F
   );
@@ -53,6 +54,9 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     _DAI.approve(address(_DAI_JOIN), uint256(-1));
   }
 
+  /// @notice User deposits DAI in the BackStop Syndicate and receives Syndicate shares
+  /// @param daiAmount Amount of DAI to deposit 
+  /// @return Amount of Backstop Syndicate shares participant receives
   function enlist(
     uint256 daiAmount
   ) external returns (uint256 backstopTokensMinted) {
@@ -72,6 +76,10 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     _mint(msg.sender, backstopTokensMinted);
   }
 
+  /// @notice User withdraws DAI and MKR from BackStop Syndicate based on Syndicate shares owned
+  /// @param backstopTokenAmount Amount of shares to burn
+  /// @return daiRedeemed: Amount of DAI withdrawn
+  /// @return mkrRedeemed: Amount of MKR withdrawn
   function defect(
     uint256 backstopTokenAmount
   ) external returns (uint256 daiRedeemed, uint256 mkrRedeemed) {
@@ -107,16 +115,18 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     require(_MKR.transfer(msg.sender, mkrRedeemed), "MKR redemption failed.");
   }
 
-  // Anyone can enter an auction, supplying 50,000 Dai in exchange for 500 MKR
+  /// @notice Triggers syndicate participation in an auction, bidding 50k DAI for 500 MKR
+  /// @param auctionId ID of the auction to participate in
   function enterAuction(uint256 auctionId) external {
     require(
       block.timestamp >= _AUCTION_START_TIME,
       "Cannot enter an auction before they have started."
     );
 
-    if (_status != Status.ACTIVATED) {
-      _status = Status.ACTIVATED;
-    }
+    // Ensure that the auction in question has not already been entered
+    require(
+      !_activeAuctions.contains(auctionId), "Already participating in this auction"
+    );
 
     // Determine the Dai currently held by the contract.
     uint256 daiBalance = _DAI.balanceOf(address(this));
@@ -125,11 +135,25 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
       daiBalance >= 50000 * 1e18, "Insufficient Dai available for auction."
     );
 
-    // TODO: ensure that the auction in question has not already been entered?
+    // Ensure that the current bid is not at a higher price than backstop.
+    (currentDaiBid, curentLotSize, , , ) = getCurrentBid(auctionId);
 
-    // TODO: ensure that the current bid is not at a higher price than backstop.
+    // Current price (Rounding error if curentLotSize is very large)
+    uint256 currentPrice = currentDaiBid / curentLotSize;
+
+    require(
+      currentPrice <= _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI, 
+      "Current bid is higher than Syndicate bid"
+    );
+
+    // Prevent further deposits
+    if (_status != Status.ACTIVATED) {
+      _status = Status.ACTIVATED;
+    }
 
     // Enter the auction.
+    // Let's not hardcode this, use vow.sump() and lotsize
+    // and bid values for a price of 100:1
     _bid(auctionId, 500 * 1e18, 50000 * 1e18);
 
     _activeAuctions.add(auctionId);
