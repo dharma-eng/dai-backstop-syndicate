@@ -130,21 +130,21 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
 
     // Determine the Dai currently held by the contract.
     uint256 daiBalance = _DAI.balanceOf(address(this));
-
     require(
       daiBalance >= 50000 * 1e18, "Insufficient Dai available for auction."
     );
 
     // Ensure that the current bid is not at a higher price than backstop.
-    (currentDaiBid, curentLotSize, , , ) = getCurrentBid(auctionId);
+    (uint256 currentDaiBid, uint256 curentLotSize, , , ) = getCurrentBid(auctionId);
 
-    // Current price (Rounding error if curentLotSize is very large)
-    uint256 currentPrice = currentDaiBid / curentLotSize;
-
-    require(
-      currentPrice <= _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI, 
-      "Current bid is higher than Syndicate bid"
-    );
+    // Current price - Rounding error if curentLotSize is large wrt to DAI bid
+    // Should require curentLotSize * beg if current bid price is below 100:1
+    (uint256 beg, , , ) = getAuctionInformation();
+    // uint256 newBidPrice = currentDaiBid / (curentLotSize.mul(beg));
+    // require(
+    //   newBidPrice <= _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI, 
+    //   "Current bid is higher than Syndicate bid"
+    // );
 
     // Prevent further deposits
     if (_status != Status.ACTIVATED) {
@@ -152,17 +152,22 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     }
 
     // Enter the auction.
-    // Let's not hardcode this, use vow.sump() and lotsize
-    // and bid values for a price of 100:1
+    // We don't to hardcode this, use vow.sump() and lotsize and bid values 
+    // for a price of at most 100:1. The `beg` could prevent us from
+    // participating at 500 MKR lot size, but could allow at 501 MKR.
+    // See; https://docs.makerdao.com/smart-contract-modules/system-stabilizer-module/flop-detailed-documentation#bidding-requirements-during-an-auction 
+    // Should pass curentLotSize * beg if current bid price is below 100:1
     _bid(auctionId, 500 * 1e18, 50000 * 1e18);
 
+    // Register auction if successful participation
     _activeAuctions.add(auctionId);
   }
 
   // Anyone can finalize an auction if it's ready
   function finalizeAuction(uint256 auctionId) external {
     // TODO: ensure that we are in the auction
-
+    // ^ Do we care? It should just fail 
+    
     // TODO: finalize auction
 
     _activeAuctions.remove(auctionId);
