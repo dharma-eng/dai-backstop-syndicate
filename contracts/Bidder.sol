@@ -31,7 +31,7 @@ contract Bidder is SimpleFlopper {
     (uint256 amountDai, , , , ) = getCurrentBid(bid);
 
     // lot needs to have 18 decimal places, and we're expecting 1 mkr = 100 dai
-    expectedLot = amountDai / 1e27 / 100;
+    expectedLot = (amountDai / 1e27) / 100;
 
     _VAT.move(owner, address(this), amountDai);
     _bid(bid, expectedLot, amountDai);
