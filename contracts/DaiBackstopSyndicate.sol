@@ -22,6 +22,9 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   // Track each active auction as an enumerable set.
   EnumerableSet.AuctionIDSet internal _activeAuctions;
 
+  // Track the bidder address for each entered auction.
+  mapping(uint256 => address) internal _bidders;
+
   // Syndicate can be activated once auctions start (TODO: determine this time!)
   uint256 internal constant _AUCTION_START_TIME = 1584490000;
 
@@ -55,7 +58,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   ) external returns (uint256 backstopTokensMinted) {
     require(
       _status == Status.ACCEPTING_DEPOSITS,
-      "Cannot deposit once auctions are activated."
+      "Cannot deposit once the first auction bid has been made."
     );
 
     require(
@@ -78,9 +81,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     // Burn the tokens.
     _burn(msg.sender, backstopTokenAmount);
 
-    // TODO: make sure that _activeAuctions is accurate!
-
-    // Determine the Dai currently locked in auctions.
+    // Determine the Dai currently being used to bid in auctions.
     uint256 daiLockedInAuctions = _getActiveAuctionDaiTotal();
 
     // Determine the Dai currently locked up on behalf of this contract.
@@ -106,35 +107,16 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     require(_MKR.transfer(msg.sender, mkrRedeemed), "MKR redemption failed.");
   }
 
-  function activate() external {
-    require(
-      _status == Status.ACCEPTING_DEPOSITS,
-      "Cannot activate again after a prior activation."
-    );
-
-    require(
-      block.timestamp >= _AUCTION_START_TIME,
-      "Cannot activate until MKR auctions have started."
-    );
-
-    // Determine the Dai currently held by the contract.
-    uint256 daiBalance = _DAI.balanceOf(address(this));
-
-    // Jump straight to deactivated if there is not enough dai to make auctions.
-    if (daiBalance < 50000 * 1e18) {
-      _status = Status.DEACTIVATED;
-    } else {
-      // Set the status as active.
-      _status = Status.ACTIVATED;
-    }
-  }
-
   // Anyone can enter an auction, supplying 50,000 Dai in exchange for 500 MKR
   function enterAuction(uint256 auctionId) external {
     require(
-      _status == Status.ACTIVATED,
-      "Cannot enter an auction unless this contract is activated."
+      block.timestamp >= _AUCTION_START_TIME,
+      "Cannot enter an auction before they have started."
     );
+
+    if (_status != Status.ACTIVATED) {
+      _status = Status.ACTIVATED;
+    }
 
     // Determine the Dai currently held by the contract.
     uint256 daiBalance = _DAI.balanceOf(address(this));
@@ -160,17 +142,6 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     // TODO: finalize auction
 
     _activeAuctions.remove(auctionId);
-  }
-
-  function deactivate() external {
-    require(
-      _status == Status.ACTIVATED,
-      "Cannot deactivate unless currently active."
-    );
-
-    // TODO: determine that MKR auction is over (check the surplus?)
-
-    _status = Status.DEACTIVATED;
   }
 
   function getStatus() external view returns (Status status) {
