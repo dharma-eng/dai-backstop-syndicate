@@ -31,7 +31,6 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   // The backstop price is 100 Dai for 1 MKR.
   uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
 
-
   IERC20 internal constant _DAI = IERC20(
     0x6B175474E89094C44Da98b954EedeAC495271d0F
   );
@@ -62,12 +61,12 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   ) external returns (uint256 backstopTokensMinted) {
     require(
       _status == Status.ACCEPTING_DEPOSITS,
-      "Cannot deposit once the first auction bid has been made."
+      "DaiBackstopSyndicate/enlist: Cannot deposit once the first auction bid has been made."
     );
 
     require(
       _DAI.transferFrom(msg.sender, address(this), daiAmount),
-      "Could not transfer Dai amount from caller."
+      "DaiBackstopSyndicate/enlist: Could not transfer Dai amount from caller."
     );
 
     _DAI_JOIN.join(address(this), daiAmount);
@@ -107,12 +106,12 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
 
     // Ensure that sufficient Dai liquidity is currently available to withdraw.
     require(
-      daiRedeemed <= daiBalance, "Insufficient Dai (in use in auctions)"
+      daiRedeemed <= daiBalance, "DaiBackstopSyndicate/defect: Insufficient Dai (in use in auctions)"
     );
 
     // Redeem the Dai and MKR.
     _DAI_JOIN.exit(msg.sender, daiRedeemed);
-    require(_MKR.transfer(msg.sender, mkrRedeemed), "MKR redemption failed.");
+    require(_MKR.transfer(msg.sender, mkrRedeemed), "DaiBackstopSyndicate/defect: MKR redemption failed.");
   }
 
   /// @notice Triggers syndicate participation in an auction, bidding 50k DAI for 500 MKR
@@ -120,44 +119,35 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   function enterAuction(uint256 auctionId) external {
     require(
       block.timestamp >= _AUCTION_START_TIME,
-      "Cannot enter an auction before they have started."
+      "DaiBackstopSyndicate/enterAuction: Cannot enter an auction before they have started."
     );
 
     // Ensure that the auction in question has not already been entered
     require(
-      !_activeAuctions.contains(auctionId), "Already participating in this auction"
+      _bidders[auctionId] == address(0x0), 
+      "DaiBackstopSyndicate/enterAuction: Already participating in this auction"
     );
 
     // Determine the Dai currently held by the contract.
+    // ??? Probably not necessary since this should throw in the _bid() call
     uint256 daiBalance = _DAI.balanceOf(address(this));
     require(
-      daiBalance >= 50000 * 1e18, "Insufficient Dai available for auction."
+      daiBalance >= 50000 * 1e18, 
+      "DaiBackstopSyndicate/enterAuction: Insufficient Dai available for auction."
     );
 
-    // Ensure that the current bid is not at a higher price than backstop.
-    (uint256 currentDaiBid, uint256 curentLotSize, , , ) = SimpleFlopper.getCurrentBid(auctionId);
+    // Create auction's Bidder contract and approve it for VAT 
+    Bidder bidder = new Bidder(SimpleFlopper.getFlopperAddress(), auctionId);
+    _bidders[auctionId] = address(bidder);
+    _VAT.hope(address(bidder));
 
-    // Current price - Rounding error if curentLotSize is large wrt to DAI bid
-    // Should require curentLotSize * beg if current bid price is below 100:1
-    (uint256 beg, , , ) = SimpleFlopper.getAuctionInformation();
-    // uint256 newBidPrice = currentDaiBid / (curentLotSize.mul(beg));
-    // require(
-    //   newBidPrice <= _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI, 
-    //   "Current bid is higher than Syndicate bid"
-    // );
+    // Submit Bid. Should revert if bid is invalid
+    bidder.submitBid();
 
     // Prevent further deposits
     if (_status != Status.ACTIVATED) {
       _status = Status.ACTIVATED;
     }
-
-    // Enter the auction.
-    // We don't to hardcode this, use vow.sump() and lotsize and bid values 
-    // for a price of at most 100:1. The `beg` could prevent us from
-    // participating at 500 MKR lot size, but could allow at 501 MKR.
-    // See; https://docs.makerdao.com/smart-contract-modules/system-stabilizer-module/flop-detailed-documentation#bidding-requirements-during-an-auction 
-    // Should pass curentLotSize * beg if current bid price is below 100:1
-    _bid(auctionId, 500 * 1e18, 50000 * 1e18);
 
     // Register auction if successful participation
     _activeAuctions.add(auctionId);
@@ -165,11 +155,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
 
   // Anyone can finalize an auction if it's ready
   function finalizeAuction(uint256 auctionId) external {
-    // TODO: ensure that we are in the auction
-    // ^ Do we care? It should just fail 
-    
-    // TODO: finalize auction
-
+    Bidder(_bidders[auctionId]).finalize();
     _activeAuctions.remove(auctionId);
   }
 
