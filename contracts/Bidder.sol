@@ -17,7 +17,6 @@ contract Bidder is SimpleFlopper {
 
   address public owner;
   uint256 public bid;
-  uint256 public amountBid;
   uint256 public expectedLot;
 
   constructor(uint256 bid_) public {
@@ -28,13 +27,14 @@ contract Bidder is SimpleFlopper {
   function submitBid() external {
     require(msg.sender == owner, "Bidder/submitBid: owner only");
 
+    // dai has 45 decimal places
     (uint256 amountDai, , , , ) = getCurrentBid(bid);
 
-    amountBid = amountDai;
-    expectedLot = amountDai / 100;
+    // lot needs to have 18 decimal places, and we're expecting 1 mkr = 100 dai
+    expectedLot = (amountDai / 1e27) / 100;
 
-    _VAT.move(owner, address(this), amountBid);
-    _bid(bid, expectedLot, amountBid); // 100 dai = 1 mkr
+    _VAT.move(owner, address(this), amountDai);
+    _bid(bid, expectedLot, amountDai);
   }
 
   function finalize() external returns (bool) {
@@ -44,6 +44,7 @@ contract Bidder is SimpleFlopper {
     require(end == 0, "Bidder/finalize: auction not finished");
 
     uint256 mkrBalance = _MKR.balanceOf(address(this));
+    uint256 daiBalance = _VAT.dai(address(this));
 
     bool didWin = mkrBalance >= expectedLot;
 
@@ -51,6 +52,10 @@ contract Bidder is SimpleFlopper {
       require(
         _MKR.transfer(owner, mkrBalance), "Bidder/finalize: transfer failed"
       );
+    }
+
+    if (daiBalance > 0) {
+      _VAT.move(address(this), owner, daiBalance);
     }
 
     return didWin;
