@@ -28,19 +28,19 @@ contract Bidder is SimpleFlopper {
     require(msg.sender == owner, "Bidder/submitBid: owner only");
 
     // dai has 45 decimal places
-    (uint256 amountDai, , , , ) = getCurrentBid(bid);
+    (uint256 amountDai, , , , ) = SimpleFlopper.getCurrentBid(bid);
 
     // lot needs to have 18 decimal places, and we're expecting 1 mkr = 100 dai
     expectedLot = (amountDai / 1e27) / 100;
 
     _VAT.move(owner, address(this), amountDai);
-    _bid(bid, expectedLot, amountDai);
+    SimpleFlopper._bid(bid, expectedLot, amountDai);
   }
 
   function finalize() external returns (bool) {
     require(msg.sender == owner, "Bidder/finalize: owner only");
 
-    ( , , , , uint48 end) = getCurrentBid(bid);
+    ( , , , , uint48 end) = SimpleFlopper.getCurrentBid(bid);
     require(end == 0, "Bidder/finalize: auction not finished");
 
     uint256 mkrBalance = _MKR.balanceOf(address(this));

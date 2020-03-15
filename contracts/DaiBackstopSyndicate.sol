@@ -135,11 +135,11 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     );
 
     // Ensure that the current bid is not at a higher price than backstop.
-    (uint256 currentDaiBid, uint256 curentLotSize, , , ) = getCurrentBid(auctionId);
+    (uint256 currentDaiBid, uint256 curentLotSize, , , ) = SimpleFlopper.getCurrentBid(auctionId);
 
     // Current price - Rounding error if curentLotSize is large wrt to DAI bid
     // Should require curentLotSize * beg if current bid price is below 100:1
-    (uint256 beg, , , ) = getAuctionInformation();
+    (uint256 beg, , , ) = SimpleFlopper.getAuctionInformation();
     // uint256 newBidPrice = currentDaiBid / (curentLotSize.mul(beg));
     // require(
     //   newBidPrice <= _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI, 
@@ -187,7 +187,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
 
     uint256 auctionDai;
     for (uint256 i = 0; i < activeAuctions.length; i++) {
-      (auctionDai, , , , ) = getCurrentBid(activeAuctions[i]);
+      (auctionDai, , , , ) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
       dai += auctionDai;
     }
   }
