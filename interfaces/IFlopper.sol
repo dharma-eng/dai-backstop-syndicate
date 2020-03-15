@@ -1,5 +1,5 @@
 pragma solidity 0.5.16;
-//pragma experimental ABIEncoderV2;
+pragma experimental ABIEncoderV2;
 
 interface IFlopper {
     // --- Auth ---
@@ -20,7 +20,7 @@ interface IFlopper {
     }
 
     // Bid objects
-    function bids(uint256) public view returns (Bid);
+    function bids(uint256) external view returns (Bid memory bid);
 
     // DAI contract address
     function vat() external view returns (address);
