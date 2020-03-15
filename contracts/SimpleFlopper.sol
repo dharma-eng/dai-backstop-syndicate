@@ -65,8 +65,7 @@ contract SimpleFlopper {
     uint48 bidDeadline,
     uint48 auctionDeadline
   ) {
-    IFlopper.Bid memory bid = _auction.bids(auctionID);
-    return (bid.bid, bid.lot, bid.guy, bid.tic, bid.end);
+    return _auction.bids(auctionID);
   }
 
   // Setters //

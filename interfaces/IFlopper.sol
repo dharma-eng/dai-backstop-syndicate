@@ -1,5 +1,4 @@
 pragma solidity 0.5.16;
-pragma experimental ABIEncoderV2;
 
 interface IFlopper {
     // --- Auth ---
@@ -10,17 +9,14 @@ interface IFlopper {
     // deauthorize caller
     function deny(address usr) external;
 
-    // --- Data ---
-    struct Bid {
-        uint256 bid; // dai amount paid
-        uint256 lot; // mkr for sale
-        address guy; // high bidder
-        uint48 tic; // expiry time
-        uint48 end; // max auction duration
-    }
-
     // Bid objects
-    function bids(uint256) external view returns (Bid memory bid);
+    function bids(uint256) external view returns (
+        uint256 bid,
+        uint256 lot,
+        address guy,
+        uint48 tic,
+        uint48 end
+    );
 
     // DAI contract address
     function vat() external view returns (address);
