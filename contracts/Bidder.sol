@@ -44,6 +44,7 @@ contract Bidder is SimpleFlopper {
     require(end == 0, "Bidder/finalize: auction not finished");
 
     uint256 mkrBalance = _MKR.balanceOf(address(this));
+    uint256 daiBalance = _VAT.dai(address(this));
 
     bool didWin = mkrBalance >= expectedLot;
 
@@ -51,6 +52,10 @@ contract Bidder is SimpleFlopper {
       require(
         _MKR.transfer(owner, mkrBalance), "Bidder/finalize: transfer failed"
       );
+    }
+
+    if (daiBalance > 0) {
+      _VAT.move(address(this), owner, daiBalance);
     }
 
     return didWin;
