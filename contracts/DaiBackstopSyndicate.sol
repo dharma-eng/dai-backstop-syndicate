@@ -4,7 +4,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+import "./Bidder.sol";
 import "./SimpleFlopper.sol";
+import "./EnumerableSet.sol";
 import "../interfaces/DaiBackstopSyndicateInterface.sol";
 import "../interfaces/IJoin.sol";
 import "../interfaces/IVat.sol";
@@ -12,12 +14,13 @@ import "../interfaces/IVat.sol";
 
 contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, ERC20 {
   using SafeMath for uint256;
+  using EnumerableSet for EnumerableSet.AuctionIDSet;
 
   // Track the status of the Syndicate.
   Status internal _status;
 
-  // Track the number of active auctions (TODO: update this as part of withdraw)
-  uint256 internal _activeAuctions;
+  // Track each active auction as an enumerable set.
+  EnumerableSet.AuctionIDSet internal _activeAuctions;
 
   // Syndicate can be activated once auctions start (TODO: determine this time!)
   uint256 internal constant _AUCTION_START_TIME = 1584490000;
@@ -78,7 +81,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     // TODO: make sure that _activeAuctions is accurate!
 
     // Determine the Dai currently locked in auctions.
-    uint256 daiLockedInAuctions = _activeAuctions.mul(50000 * 1e18);
+    uint256 daiLockedInAuctions = _getActiveAuctionDaiTotal();
 
     // Determine the Dai currently locked up on behalf of this contract.
     uint256 daiBalance = _VAT.dai(address(this));
@@ -147,16 +150,16 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     // Enter the auction.
     _bid(auctionId, 500 * 1e18, 50000 * 1e18);
 
-    _activeAuctions = _activeAuctions.add(1);
+    _activeAuctions.add(auctionId);
   }
 
-  // (may not be necessary since this is just dent, no tend?)
+  // Anyone can finalize an auction if it's ready
   function finalizeAuction(uint256 auctionId) external {
     // TODO: ensure that we are in the auction
 
     // TODO: finalize auction
 
-    _activeAuctions = _activeAuctions.sub(1);
+    _activeAuctions.remove(auctionId);
   }
 
   function deactivate() external {
@@ -174,7 +177,18 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     status = _status;
   }
 
-  function getActiveAuctions() external view returns (uint256 activeAuctions) {
-    activeAuctions = _activeAuctions;
+  function getActiveAuctions() external view returns (uint256[] memory activeAuctions) {
+    activeAuctions = _activeAuctions.enumerate();
+  }
+
+  function _getActiveAuctionDaiTotal() internal view returns (uint256 dai) {
+    dai = 0;
+    uint256[] memory activeAuctions = _activeAuctions.enumerate();
+
+    uint256 auctionDai;
+    for (uint256 i = 0; i < activeAuctions.length; i++) {
+      (auctionDai, , , , ) = getCurrentBid(activeAuctions[i]);
+      dai += auctionDai;
+    }
   }
 }
