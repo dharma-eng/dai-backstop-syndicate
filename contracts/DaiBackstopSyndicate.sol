@@ -128,14 +128,6 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
       "DaiBackstopSyndicate/enterAuction: Already participating in this auction"
     );
 
-    // Determine the Dai currently held by the contract.
-    // ??? Probably not necessary since this should throw in the _bid() call
-    uint256 daiBalance = _DAI.balanceOf(address(this));
-    require(
-      daiBalance >= 50000 * 1e18, 
-      "DaiBackstopSyndicate/enterAuction: Insufficient Dai available for auction."
-    );
-
     // Create auction's Bidder contract and approve it for VAT 
     Bidder bidder = new Bidder(SimpleFlopper.getFlopperAddress(), auctionId);
     _bidders[auctionId] = address(bidder);
