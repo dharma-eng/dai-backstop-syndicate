@@ -93,13 +93,8 @@ contract VatLike {
   token implementations, creating a bounded context for the Vat. The
   adapters here are provided as working examples:
 
-    - `GemJoin`: For well behaved ERC20 tokens, with simple transfer
-           semantics.
-
-    - `ETHJoin`: For native Ether.
-
     - `DaiJoin`: For connecting internal Dai balances to an external
-           `DSToken` implementation.
+          `DSToken` implementation.
 
   In practice, adapter implementations will be varied and specific to
   individual collateral types, accounting for different transfer
@@ -111,81 +106,6 @@ contract VatLike {
     - `exit`: remove collateral from the system
 
 */
-
-contract GemJoin is LibNote {
-  // --- Auth ---
-  mapping (address => uint) public wards;
-  function rely(address usr) external note auth { wards[usr] = 1; }
-  function deny(address usr) external note auth { wards[usr] = 0; }
-  modifier auth {
-    require(wards[msg.sender] == 1, "GemJoin/not-authorized");
-    _;
-  }
-
-  VatLike public vat;
-  bytes32 public ilk;
-  GemLike public gem;
-  uint  public dec;
-  uint  public live;  // Access Flag
-
-  constructor(address vat_, bytes32 ilk_, address gem_) public {
-    wards[msg.sender] = 1;
-    live = 1;
-    vat = VatLike(vat_);
-    ilk = ilk_;
-    gem = GemLike(gem_);
-    dec = gem.decimals();
-  }
-  function cage() external note auth {
-    live = 0;
-  }
-  function join(address usr, uint wad) external note {
-    require(live == 1, "GemJoin/not-live");
-    require(int(wad) >= 0, "GemJoin/overflow");
-    vat.slip(ilk, usr, int(wad));
-    require(gem.transferFrom(msg.sender, address(this), wad), "GemJoin/failed-transfer");
-  }
-  function exit(address usr, uint wad) external note {
-    require(wad <= 2 ** 255, "GemJoin/overflow");
-    vat.slip(ilk, msg.sender, -int(wad));
-    require(gem.transfer(usr, wad), "GemJoin/failed-transfer");
-  }
-}
-
-contract ETHJoin is LibNote {
-  // --- Auth ---
-  mapping (address => uint) public wards;
-  function rely(address usr) external note auth { wards[usr] = 1; }
-  function deny(address usr) external note auth { wards[usr] = 0; }
-  modifier auth {
-    require(wards[msg.sender] == 1, "ETHJoin/not-authorized");
-    _;
-  }
-
-  VatLike public vat;
-  bytes32 public ilk;
-  uint  public live;  // Access Flag
-
-  constructor(address vat_, bytes32 ilk_) public {
-    wards[msg.sender] = 1;
-    live = 1;
-    vat = VatLike(vat_);
-    ilk = ilk_;
-  }
-  function cage() external note auth {
-    live = 0;
-  }
-  function join(address usr) external payable note {
-    require(live == 1, "ETHJoin/not-live");
-    require(int(msg.value) >= 0, "ETHJoin/overflow");
-    vat.slip(ilk, usr, int(msg.value));
-  }
-  function exit(address payable usr, uint wad) external note {
-    require(int(wad) >= 0, "ETHJoin/overflow");
-    vat.slip(ilk, msg.sender, -int(wad));
-    usr.transfer(wad);
-  }
-}
 
 contract DaiJoin is LibNote {
   // --- Auth ---

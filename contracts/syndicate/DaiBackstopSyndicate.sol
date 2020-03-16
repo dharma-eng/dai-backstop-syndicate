@@ -52,12 +52,19 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   IJoin internal _DAI_JOIN;
   IVat internal _VAT;
 
-  constructor(address _dai, address _mkr, address _dai_join, address _vat) public {
+  constructor(
+    address dai_,
+    address mkr_,
+    address daiJoin_,
+    address vat_,
+    address flopper_
+  ) SimpleFlopper(flopper_) public
+  {
     _status = Status.ACCEPTING_DEPOSITS;
-    _DAI = IERC20(_dai);
-    _MKR = IERC20(_mkr);
-    _DAI_JOIN = IJoin(_dai_join);
-    _VAT = IVat(_vat);
+    _DAI = IERC20(dai_);
+    _MKR = IERC20(mkr_);
+    _DAI_JOIN = IJoin(daiJoin_);
+    _VAT = IVat(vat_);
     _VAT.hope(address(_DAI_JOIN));
     _DAI.approve(address(_DAI_JOIN), uint256(-1));
   }
@@ -81,6 +88,7 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     _DAI_JOIN.join(address(this), daiAmount);
 
     backstopTokensMinted = daiAmount;
+
     _mint(msg.sender, backstopTokensMinted);
   }
 

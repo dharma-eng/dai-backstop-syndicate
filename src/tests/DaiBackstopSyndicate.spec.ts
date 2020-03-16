@@ -99,6 +99,10 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
   let user_dai_balance: BigNumber = new BigNumber(50000).mul(decimals)
   let enlist_amount: BigNumber = new BigNumber(1000).mul(decimals) 
 
+  // Ganache is often wrong with gas_estimation when doing cross-contract calls
+  // so we use a high hard-coded gasLimit when needed
+  let TX_PARAM = {gasLimit: 9000000}
+
   // load contract abi and deploy to test server
   before(async () => {
     ownerAddress = await ownerWallet.getAddress()
@@ -153,7 +157,9 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
       daiAddress,
       mkrAddress,
       daiJoinAddress,
-      vatAddress
+      vatAddress,
+      flopAddress,
+      {gasLimit: 9000000}
     ]) as DaiBackstopSyndicate
     syndicateConstract = await syndicateOwnerContract.connect(userSigner) as DaiBackstopSyndicate
     syndicateAddress = syndicateOwnerContract.address
@@ -169,9 +175,18 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
     await daiConstract.functions.approve(syndicateAddress, user_dai_balance)
   })
 
+  describe('Getter functions', () => {
+    describe('getStatus() function', () => {
+      it('should return status', async () => {
+        const status = await syndicateConstract.functions.getStatus()
+        expect(status).to.be.eql(0)
+      })
+    })
+  })
+
   describe('enlist() function', () => {
     it('should PASS if user has enough DAI', async () => {
-      const tx = syndicateConstract.functions.enlist(enlist_amount)
+      const tx = syndicateConstract.functions.enlist(enlist_amount, TX_PARAM)
       await expect(tx).to.be.fulfilled
     })
 
