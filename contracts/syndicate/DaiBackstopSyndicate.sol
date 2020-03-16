@@ -106,33 +106,38 @@ contract DaiBackstopSyndicate is
     _burn(msg.sender, backstopTokenAmount);
 
     // Determine the Dai currently being used to bid in auctions.
-    uint256 daiLockedInAuctions = _getActiveAuctionDaiTotal();
+    uint256 vatDaiLockedInAuctions = _getActiveAuctionVatDaiTotal();
 
     // Determine the Dai currently locked up on behalf of this contract.
-    uint256 daiBalance = _VAT.dai(address(this)) / 1e27;
+    uint256 vatDaiBalance = _VAT.dai(address(this));
 
     // Combine Dai locked in auctions with the balance on the contract.
-    uint256 combinedDai = daiLockedInAuctions.add(daiBalance);
+    uint256 combinedVatDai = vatDaiLockedInAuctions.add(vatDaiBalance);
 
     // Determine the Maker currently held by the contract.
     uint256 makerBalance = _MKR.balanceOf(address(this));
 
     // Determine the amount of Dai and MKR to redeem based on the share.
-    daiRedeemed = combinedDai.mul(shareFloat) / 1e18;
+    uint256 vatDaiRedeemed = combinedVatDai.mul(shareFloat) / 1e18;
     mkrRedeemed = makerBalance.mul(shareFloat) / 1e18;
+
+    // daiRedeemed is the e18 version of vatDaiRedeemed (e45). Needed for dai token, otherwise we keep decimals of vatDai
+    daiRedeemed = vatDaiRedeemed / 1e27;
+
 
     // Ensure that sufficient Dai liquidity is currently available to withdraw.
     require(
-      daiRedeemed <= daiBalance,
-      "DaiBackstopSyndicate/defect: Insufficient Dai due to ongoing auctions."
+      vatDaiRedeemed <= vatDaiBalance, "DaiBackstopSyndicate/defect: Insufficient Dai (in use in auctions)"
     );
 
-    // Redeem the Dai (held in the central Maker ledger) and MKR (as an ERC20).
-    _DAI_JOIN.exit(msg.sender, daiRedeemed);
-    require(
-      _MKR.transfer(msg.sender, mkrRedeemed),
-      "DaiBackstopSyndicate/defect: MKR redemption failed."
-    );
+    // Redeem the Dai and MKR, giving user vatDai if global settlement, otherwise, tokens
+    if (SimpleFlopper.isEnabled()) {
+      _DAI_JOIN.exit(msg.sender, daiRedeemed);
+    } else {
+      _VAT.move(address(this), msg.sender, vatDaiRedeemed);
+    }
+
+    require(_MKR.transfer(msg.sender, mkrRedeemed), "DaiBackstopSyndicate/defect: MKR redemption failed.");
   }
 
   /// @notice Triggers syndicate participation in an auction, bidding 50k DAI for 500 MKR
@@ -204,17 +209,18 @@ contract DaiBackstopSyndicate is
     activeAuctions = _activeAuctions.enumerate();
   }
 
-  function _getActiveAuctionDaiTotal() internal view returns (uint256 dai) {
-    dai = 0;
+  function _getActiveAuctionVatDaiTotal() internal view returns (uint256 vatDai) {
+    vatDai = 0;
     uint256[] memory activeAuctions = _activeAuctions.enumerate();
 
-    uint256 auctionDai;
+    uint256 auctionVatDai;
     address bidder;
     for (uint256 i = 0; i < activeAuctions.length; i++) {
       // Dai bid size is returned from getCurrentBid with 45 decimals
-      (auctionDai,, bidder,,) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
+      (auctionVatDai,, bidder,,) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
       if (bidder == address(this)) {
-        dai += (auctionDai / 1e27);
+        // we are keeping the 45 decimals in case we need to return vatDai
+        vatDai.add(auctionVatDai);
       }
     }
   }
