@@ -28,14 +28,6 @@ interface DaiBackstopSyndicateInterface extends Interface {
       encode([spender, subtractedValue]: [string, BigNumberish]): string;
     }>;
 
-    defect: TypedFunctionDescription<{
-      encode([backstopTokenAmount]: [BigNumberish]): string;
-    }>;
-
-    enlist: TypedFunctionDescription<{
-      encode([daiAmount]: [BigNumberish]): string;
-    }>;
-
     getAuctionInformation: TypedFunctionDescription<{ encode([]: []): string }>;
 
     getCurrentBid: TypedFunctionDescription<{
@@ -70,6 +62,14 @@ interface DaiBackstopSyndicateInterface extends Interface {
         string,
         BigNumberish
       ]): string;
+    }>;
+
+    enlist: TypedFunctionDescription<{
+      encode([daiAmount]: [BigNumberish]): string;
+    }>;
+
+    defect: TypedFunctionDescription<{
+      encode([backstopTokenAmount]: [BigNumberish]): string;
     }>;
 
     enterAuction: TypedFunctionDescription<{
@@ -137,16 +137,6 @@ export class DaiBackstopSyndicate extends Contract {
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
-    defect(
-      backstopTokenAmount: BigNumberish,
-      overrides?: TransactionOverrides
-    ): Promise<ContractTransaction>;
-
-    enlist(
-      daiAmount: BigNumberish,
-      overrides?: TransactionOverrides
-    ): Promise<ContractTransaction>;
-
     getAuctionInformation(): Promise<{
       bidIncrement: BigNumber;
       repriceIncrement: BigNumber;
@@ -204,6 +194,16 @@ export class DaiBackstopSyndicate extends Contract {
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
+    enlist(
+      daiAmount: BigNumberish,
+      overrides?: TransactionOverrides
+    ): Promise<ContractTransaction>;
+
+    defect(
+      backstopTokenAmount: BigNumberish,
+      overrides?: TransactionOverrides
+    ): Promise<ContractTransaction>;
+
     enterAuction(
       auctionId: BigNumberish,
       overrides?: TransactionOverrides
@@ -232,16 +232,6 @@ export class DaiBackstopSyndicate extends Contract {
   decreaseAllowance(
     spender: string,
     subtractedValue: BigNumberish,
-    overrides?: TransactionOverrides
-  ): Promise<ContractTransaction>;
-
-  defect(
-    backstopTokenAmount: BigNumberish,
-    overrides?: TransactionOverrides
-  ): Promise<ContractTransaction>;
-
-  enlist(
-    daiAmount: BigNumberish,
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
 
@@ -302,6 +292,16 @@ export class DaiBackstopSyndicate extends Contract {
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
 
+  enlist(
+    daiAmount: BigNumberish,
+    overrides?: TransactionOverrides
+  ): Promise<ContractTransaction>;
+
+  defect(
+    backstopTokenAmount: BigNumberish,
+    overrides?: TransactionOverrides
+  ): Promise<ContractTransaction>;
+
   enterAuction(
     auctionId: BigNumberish,
     overrides?: TransactionOverrides
@@ -338,10 +338,6 @@ export class DaiBackstopSyndicate extends Contract {
       subtractedValue: BigNumberish
     ): Promise<BigNumber>;
 
-    defect(backstopTokenAmount: BigNumberish): Promise<BigNumber>;
-
-    enlist(daiAmount: BigNumberish): Promise<BigNumber>;
-
     getAuctionInformation(): Promise<BigNumber>;
 
     getCurrentBid(auctionID: BigNumberish): Promise<BigNumber>;
@@ -370,6 +366,10 @@ export class DaiBackstopSyndicate extends Contract {
       recipient: string,
       amount: BigNumberish
     ): Promise<BigNumber>;
+
+    enlist(daiAmount: BigNumberish): Promise<BigNumber>;
+
+    defect(backstopTokenAmount: BigNumberish): Promise<BigNumber>;
 
     enterAuction(auctionId: BigNumberish): Promise<BigNumber>;
 

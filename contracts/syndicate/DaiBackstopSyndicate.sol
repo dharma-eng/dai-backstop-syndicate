@@ -60,7 +60,6 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     _VAT = IVat(_vat);
     _VAT.hope(address(_DAI_JOIN));
     _DAI.approve(address(_DAI_JOIN), uint256(-1));
-    revert("REVERT");
   }
 
   /// @notice User deposits DAI in the BackStop Syndicate and receives Syndicate shares
@@ -69,13 +68,10 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   function enlist(
     uint256 daiAmount
   ) external returns (uint256 backstopTokensMinted) {
-    revert("DEBUG1");
     require(
       _status == Status.ACCEPTING_DEPOSITS,
       "DaiBackstopSyndicate/enlist: Cannot deposit once the first auction bid has been made."
     );
-
-    require(1 == 0, "DEBUG");
 
     require(
       _DAI.transferFrom(msg.sender, address(this), daiAmount),

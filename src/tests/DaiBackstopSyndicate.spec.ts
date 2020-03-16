@@ -176,8 +176,6 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
     })
 
     it('should REVERT if user does not have enough dai', async () => {
-      let balance = await daiConstract.functions.balanceOf(userAddress)
-      expect(balance).to.be.eql(user_dai_balance)
       const tx = syndicateConstract.functions.enlist(user_dai_balance.add(1))
       await expect(tx).to.be.rejectedWith(RevertError("Dai/insufficient-balance"))
     })

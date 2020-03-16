@@ -197,53 +197,6 @@ const _abi = [
     type: "function"
   },
   {
-    constant: false,
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "backstopTokenAmount",
-        type: "uint256"
-      }
-    ],
-    name: "defect",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "daiRedeemed",
-        type: "uint256"
-      },
-      {
-        internalType: "uint256",
-        name: "mkrRedeemed",
-        type: "uint256"
-      }
-    ],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "daiAmount",
-        type: "uint256"
-      }
-    ],
-    name: "enlist",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "backstopTokensMinted",
-        type: "uint256"
-      }
-    ],
-    payable: false,
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
     constant: true,
     inputs: [],
     name: "getAuctionInformation",
@@ -492,6 +445,53 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
+        name: "daiAmount",
+        type: "uint256"
+      }
+    ],
+    name: "enlist",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "backstopTokensMinted",
+        type: "uint256"
+      }
+    ],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "backstopTokenAmount",
+        type: "uint256"
+      }
+    ],
+    name: "defect",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "daiRedeemed",
+        type: "uint256"
+      },
+      {
+        internalType: "uint256",
+        name: "mkrRedeemed",
+        type: "uint256"
+      }
+    ],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    constant: false,
+    inputs: [
+      {
+        internalType: "uint256",
         name: "auctionId",
         type: "uint256"
       }
@@ -523,7 +523,7 @@ const _abi = [
     name: "getStatus",
     outputs: [
       {
-        internalType: "enum IDaiBackstopSyndicate.Status",
+        internalType: "enum DaiBackstopSyndicate.Status",
         name: "status",
         type: "uint8"
       }

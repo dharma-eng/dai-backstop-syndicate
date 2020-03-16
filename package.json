@@ -38,7 +38,7 @@
     "typechain-target-ethers": "^1.0.3"
   },
   "scripts": {
-    "build": "rm -rf build && ./node_modules/.bin/truffle compile --all && yarn gen:contract-typings && tsc -b",
+    "build": "rm -rf build && truffle compile --all && yarn gen:contract-typings && tsc -b",
     "lint": "./node_modules/.bin/solhint 'contracts/**/*.sol' && ./node_modules/.bin/solium -d ./contracts --no-soliumignore",
     "clean": "rm -rf build && rm -rf typings/contracts",
     "ganache": "ganache-cli --networkId ${npm_package_config_ganacheNetworkID} --port ${npm_package_config_ganachePort} --gasLimit ${npm_package_config_ganacheGasLimit} --gasPrice ${npm_package_config_ganacheGasPrice} --defaultBalanceEther ${npm_package_config_etherBalance} --deterministic --mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
