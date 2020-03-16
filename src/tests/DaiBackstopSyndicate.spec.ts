@@ -173,6 +173,11 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
 
     // Set user DAI approvals for transfers
     await daiConstract.functions.approve(syndicateAddress, user_dai_balance)
+    
+    // TO DO
+    // Need to set-up DAI_JOIN because right now no-one can dai_join.join()
+    // since vat.dai[dai_join] is empty. Tests are failing because of this.
+    
   })
 
   describe('Getter functions', () => {
