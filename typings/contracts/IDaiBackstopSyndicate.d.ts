@@ -33,7 +33,15 @@ interface IDaiBackstopSyndicateInterface extends Interface {
     getActiveAuctions: TypedFunctionDescription<{ encode([]: []): string }>;
   };
 
-  events: {};
+  events: {
+    AuctionEntered: TypedEventDescription<{
+      encodeTopics([auctionId, bidder]: [null, null]): string[];
+    }>;
+
+    AuctionFinalized: TypedEventDescription<{
+      encodeTopics([auctionId, bidder]: [null, null]): string[];
+    }>;
+  };
 }
 
 export class IDaiBackstopSyndicate extends Contract {
@@ -102,7 +110,11 @@ export class IDaiBackstopSyndicate extends Contract {
 
   getActiveAuctions(): Promise<BigNumber[]>;
 
-  filters: {};
+  filters: {
+    AuctionEntered(auctionId: null, bidder: null): EventFilter;
+
+    AuctionFinalized(auctionId: null, bidder: null): EventFilter;
+  };
 
   estimate: {
     enlist(daiAmount: BigNumberish): Promise<BigNumber>;

@@ -94,6 +94,14 @@ interface DaiBackstopSyndicateInterface extends Interface {
       ]): string[];
     }>;
 
+    AuctionEntered: TypedEventDescription<{
+      encodeTopics([auctionId, bidder]: [null, null]): string[];
+    }>;
+
+    AuctionFinalized: TypedEventDescription<{
+      encodeTopics([auctionId, bidder]: [null, null]): string[];
+    }>;
+
     Transfer: TypedEventDescription<{
       encodeTopics([from, to, value]: [
         string | null,
@@ -322,6 +330,10 @@ export class DaiBackstopSyndicate extends Contract {
       spender: string | null,
       value: null
     ): EventFilter;
+
+    AuctionEntered(auctionId: null, bidder: null): EventFilter;
+
+    AuctionFinalized(auctionId: null, bidder: null): EventFilter;
 
     Transfer(from: string | null, to: string | null, value: null): EventFilter;
   };

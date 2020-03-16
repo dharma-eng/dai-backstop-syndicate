@@ -25,7 +25,7 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   // Track the bidder address for each entered auction.
   mapping(uint256 => address) internal _bidders;
 
-  // The backstop price is 100 Dai for 1 MKR.
+  // The backstop price is 100 Dai for 1 MKR (logic implemented in bidder)
   uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
 
   // IERC20 internal constant _DAI = IERC20(
@@ -154,22 +154,22 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     _activeAuctions.add(auctionId);
 
     // Emit an event to signal that the auction was entered.
-    emit AuctionEntered(auctionId, bidder);
+    emit AuctionEntered(auctionId, address(bidder));
   }
 
   // Anyone can finalize an auction if it's ready
   function finalizeAuction(uint256 auctionId) external {
     // Determine the bidder for the auction in question.
-    address bidder = _bidders[auctionId];
-    
+    Bidder bidder = Bidder(_bidders[auctionId]);
+
     // Finalize auction from bidder, sending Dai or MKR back to this contract.
-    Bidder(bidder).finalize();
-    
+    bidder.finalize();
+
     // Remove the auction from the set of active auctions.
     _activeAuctions.remove(auctionId);
-    
+
     // Emit an event to signal that the auction was finalized.
-    emit AuctionFinalized(auctionId, bidder);
+    emit AuctionFinalized(auctionId, address(bidder));
   }
 
   function getStatus() external view returns (Status status) {
