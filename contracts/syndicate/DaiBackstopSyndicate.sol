@@ -99,13 +99,13 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     _burn(msg.sender, backstopTokenAmount);
 
     // Determine the Dai currently being used to bid in auctions.
-    uint256 daiLockedInAuctions = _getActiveAuctionDaiTotal();
+    uint256 vatDaiLockedInAuctions = _getActiveAuctionVatDaiTotal();
 
     // Determine the Dai currently locked up on behalf of this contract.
     uint256 vatDaiBalance = _VAT.dai(address(this));
 
     // Combine Dai locked in auctions with the balance on the contract.
-    uint256 combinedVatDai = daiLockedInAuctions.add(vatDaiBalance);
+    uint256 combinedVatDai = vatDaiLockedInAuctions.add(vatDaiBalance);
 
     // Determine the Maker currently held by the contract.
     uint256 makerBalance = _MKR.balanceOf(address(this));
@@ -195,18 +195,18 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     activeAuctions = _activeAuctions.enumerate();
   }
 
-  function _getActiveAuctionDaiTotal() internal view returns (uint256 dai) {
-    dai = 0;
+  function _getActiveAuctionVatDaiTotal() internal view returns (uint256 vatDai) {
+    vatDai = 0;
     uint256[] memory activeAuctions = _activeAuctions.enumerate();
 
-    uint256 auctionDai;
+    uint256 auctionVatDai;
     address bidder;
     for (uint256 i = 0; i < activeAuctions.length; i++) {
       // Dai bid size is returned from getCurrentBid with 45 decimals
-      (auctionDai,, bidder,,) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
+      (auctionVatDai,, bidder,,) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
       if (bidder == address(this)) {
         // we are keeping the 45 decimals in case we need to return vatDai
-        dai += auctionDai;
+        vatDai.add(auctionVatDai);
       }
     }
   }
