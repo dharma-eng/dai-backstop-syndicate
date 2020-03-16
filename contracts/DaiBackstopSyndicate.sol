@@ -165,8 +165,9 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
 
     uint256 auctionDai;
     for (uint256 i = 0; i < activeAuctions.length; i++) {
+      // Dai bid size is returned from getCurrentBid with 45 decimals
       (auctionDai, , , , ) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
-      dai += auctionDai;
+      dai += (auctionDai / 1e27);
     }
   }
 }
