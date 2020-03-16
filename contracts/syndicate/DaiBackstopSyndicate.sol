@@ -109,7 +109,7 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     uint256 daiLockedInAuctions = _getActiveAuctionDaiTotal();
 
     // Determine the Dai currently locked up on behalf of this contract.
-    uint256 daiBalance = _VAT.dai(address(this));
+    uint256 daiBalance = _VAT.dai(address(this)) / 1e27;
 
     // Combine Dai locked in auctions with the balance on the contract.
     uint256 combinedDai = daiLockedInAuctions.add(daiBalance);
