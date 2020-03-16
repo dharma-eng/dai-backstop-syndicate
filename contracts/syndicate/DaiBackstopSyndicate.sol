@@ -124,7 +124,7 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     );
 
     // Redeem the Dai and MKR, giving user vatDai if global settlement, otherwise, tokens
-    if (isEnabled()) {
+    if (SimpleFlopper.isEnabled()) {
       _DAI_JOIN.exit(msg.sender, daiRedeemed);
     } else {
       _VAT.move(address(this), msg.sender, vatDaiRedeemed);
