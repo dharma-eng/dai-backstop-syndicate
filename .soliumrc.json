@@ -6,6 +6,7 @@
     "indentation": ["error", 2],
     "linebreak-style": ["error", "unix"],
     "lbrace": "off",
-    "security/no-block-members": "off"
+    "security/no-block-members": "off",
+    "error-reason": "off"
   }
 }

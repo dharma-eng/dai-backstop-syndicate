@@ -41,7 +41,7 @@ contract Bidder is SimpleFlopper {
     // ??? Does our Bidder need to approve the Flopper?
     SimpleFlopper._bid(auctionID, expectedLot, amountDai);
 
-    // Mark bid as successful 
+    // Mark bid as successful
     bidSubmited = true;
   }
 
@@ -59,7 +59,7 @@ contract Bidder is SimpleFlopper {
       // Otherwise we got outbid and we withdraw DAI
       if (bidder == address(this)) {
         SimpleFlopper._finalize(auctionID);
-      } 
+      }
     }
 
     uint256 mkrBalance = _MKR.balanceOf(address(this));

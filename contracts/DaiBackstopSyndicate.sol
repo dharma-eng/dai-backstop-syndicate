@@ -54,7 +54,7 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   }
 
   /// @notice User deposits DAI in the BackStop Syndicate and receives Syndicate shares
-  /// @param daiAmount Amount of DAI to deposit 
+  /// @param daiAmount Amount of DAI to deposit
   /// @return Amount of Backstop Syndicate shares participant receives
   function enlist(
     uint256 daiAmount
@@ -124,11 +124,11 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
 
     // Ensure that the auction in question has not already been entered
     require(
-      _bidders[auctionId] == address(0x0), 
+      _bidders[auctionId] == address(0x0),
       "DaiBackstopSyndicate/enterAuction: Already participating in this auction"
     );
 
-    // Create auction's Bidder contract and approve it for VAT 
+    // Create auction's Bidder contract and approve it for VAT
     Bidder bidder = new Bidder(SimpleFlopper.getFlopperAddress(), auctionId);
     _bidders[auctionId] = address(bidder);
     _VAT.hope(address(bidder));
