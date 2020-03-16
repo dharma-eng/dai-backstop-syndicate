@@ -1,7 +1,7 @@
 pragma solidity 0.5.16;
 
 
-interface DaiBackstopSyndicateInterface {
+interface IDaiBackstopSyndicate {
   enum Status {
     ACCEPTING_DEPOSITS,
     ACTIVATED

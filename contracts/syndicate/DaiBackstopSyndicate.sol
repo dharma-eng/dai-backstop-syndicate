@@ -7,12 +7,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Bidder.sol";
 import "./SimpleFlopper.sol";
 import "./EnumerableSet.sol";
-import "../interfaces/DaiBackstopSyndicateInterface.sol";
+import "../interfaces/IDaiBackstopSyndicate.sol";
 import "../interfaces/IJoin.sol";
 import "../interfaces/IVat.sol";
 
 
-contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, ERC20 {
+contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   using SafeMath for uint256;
   using EnumerableSet for EnumerableSet.AuctionIDSet;
 
@@ -31,26 +31,36 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   // The backstop price is 100 Dai for 1 MKR.
   uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
 
-  IERC20 internal constant _DAI = IERC20(
-    0x6B175474E89094C44Da98b954EedeAC495271d0F
-  );
+  // IERC20 internal constant _DAI = IERC20(
+  //   0x6B175474E89094C44Da98b954EedeAC495271d0F
+  // );
 
-  IERC20 internal constant _MKR = IERC20(
-    0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2
-  );
+  // IERC20 internal constant _MKR = IERC20(
+  //   0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2
+  // );
 
-  IJoin internal constant _DAI_JOIN = IJoin(
-    0x9759A6Ac90977b93B58547b4A71c78317f391A28
-  );
+  // IJoin internal constant _DAI_JOIN = IJoin(
+  //   0x9759A6Ac90977b93B58547b4A71c78317f391A28
+  // );
 
-  IVat internal constant _VAT = IVat(
-    0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B
-  );
+  // IVat internal constant _VAT = IVat(
+  //   0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B
+  // );
 
-  constructor() public {
+  IERC20 internal _DAI;
+  IERC20 internal _MKR;
+  IJoin internal _DAI_JOIN;
+  IVat internal _VAT;
+
+  constructor(address _dai, address _mkr, address _dai_join, address _vat) public {
     _status = Status.ACCEPTING_DEPOSITS;
+    _DAI = IERC20(_dai);
+    _MKR = IERC20(_mkr);
+    _DAI_JOIN = IJoin(_dai_join);
+    _VAT = IVat(_vat);
     _VAT.hope(address(_DAI_JOIN));
     _DAI.approve(address(_DAI_JOIN), uint256(-1));
+    revert("REVERT");
   }
 
   /// @notice User deposits DAI in the BackStop Syndicate and receives Syndicate shares
@@ -59,10 +69,13 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
   function enlist(
     uint256 daiAmount
   ) external returns (uint256 backstopTokensMinted) {
+    revert("DEBUG1");
     require(
       _status == Status.ACCEPTING_DEPOSITS,
       "DaiBackstopSyndicate/enlist: Cannot deposit once the first auction bid has been made."
     );
+
+    require(1 == 0, "DEBUG");
 
     require(
       _DAI.transferFrom(msg.sender, address(this), daiAmount),
