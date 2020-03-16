@@ -2,7 +2,8 @@ pragma solidity 0.5.16;
 
 /**
  * Adapted from OpenZeppelin's address version of the same, written by Alberto Cuesta Cañada:
- * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/5dfe7215a9156465d550030eadc08770503b2b2f/contracts/utils/EnumerableSet.sol
+ * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/5dfe7215a9156465d550030eadc08770503b2b2f/
+ *   contracts/utils/EnumerableSet.sol
  */
 library EnumerableSet {
 
