@@ -5,13 +5,19 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./SimpleFlopper.sol";
+import "./TwoStepOwnable.sol";
 import "./EnumerableSet.sol";
 import "../interfaces/IDaiBackstopSyndicate.sol";
 import "../interfaces/IJoin.sol";
 import "../interfaces/IVat.sol";
 
 
-contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
+contract DaiBackstopSyndicate is
+  IDaiBackstopSyndicate,
+  SimpleFlopper,
+  TwoStepOwnable,
+  ERC20
+{
   using SafeMath for uint256;
   using EnumerableSet for EnumerableSet.AuctionIDSet;
 
@@ -67,7 +73,7 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   /// @return Amount of Backstop Syndicate shares participant receives
   function enlist(
     uint256 daiAmount
-  ) external returns (uint256 backstopTokensMinted) {
+  ) external notWhenDeactivated returns (uint256 backstopTokensMinted) {
     require(
       _status == Status.ACCEPTING_DEPOSITS,
       "DaiBackstopSyndicate/enlist: Cannot deposit once the first auction bid has been made."
@@ -78,10 +84,11 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
       "DaiBackstopSyndicate/enlist: Could not transfer Dai amount from caller."
     );
 
+    // Place the supplied Dai into the central Maker ledger for use in auctions.
     _DAI_JOIN.join(address(this), daiAmount);
 
+    // Mint tokens 1:1 to the caller in exchange for the supplied Dai.
     backstopTokensMinted = daiAmount;
-
     _mint(msg.sender, backstopTokensMinted);
   }
 
@@ -129,15 +136,16 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     } else {
       _VAT.move(address(this), msg.sender, vatDaiRedeemed);
     }
+
     require(_MKR.transfer(msg.sender, mkrRedeemed), "DaiBackstopSyndicate/defect: MKR redemption failed.");
   }
 
   /// @notice Triggers syndicate participation in an auction, bidding 50k DAI for 500 MKR
   /// @param auctionId ID of the auction to participate in
-  function enterAuction(uint256 auctionId) external {
+  function enterAuction(uint256 auctionId) external notWhenDeactivated {
     require(
       !_activeAuctions.contains(auctionId),
-      "DaiBackstopSyndicate/enterAuction: Auction already active"
+      "DaiBackstopSyndicate/enterAuction: Auction already active."
     );
 
     // dai has 45 decimal places
@@ -187,6 +195,12 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     emit AuctionFinalized(auctionId);
   }
 
+  /// @notice The owner can pause new deposits and auctions. Existing auctions
+  /// and withdrawals will be unaffected.
+  function ceaseFire() external onlyOwner {
+    _status = Status.DEACTIVATED;
+  }
+
   function getStatus() external view returns (Status status) {
     status = _status;
   }
@@ -209,5 +223,13 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
         vatDai.add(auctionVatDai);
       }
     }
+  }
+
+  modifier notWhenDeactivated() {
+    require(
+      _status != Status.DEACTIVATED,
+      "DaiBackstopSyndicate/notWhenDeactivated: Syndicate is deactivated, please withdraw."
+    );
+    _;
   }
 }

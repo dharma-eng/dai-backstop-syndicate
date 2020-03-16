@@ -136,6 +136,15 @@ const _abi = [
     type: "function"
   },
   {
+    constant: false,
+    inputs: [],
+    name: "ceaseFire",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
     constant: true,
     inputs: [],
     name: "getStatus",

@@ -28,6 +28,8 @@ interface IDaiBackstopSyndicateInterface extends Interface {
       encode([auctionId]: [BigNumberish]): string;
     }>;
 
+    ceaseFire: TypedFunctionDescription<{ encode([]: []): string }>;
+
     getStatus: TypedFunctionDescription<{ encode([]: []): string }>;
 
     getActiveAuctions: TypedFunctionDescription<{ encode([]: []): string }>;
@@ -81,6 +83,8 @@ export class IDaiBackstopSyndicate extends Contract {
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
+    ceaseFire(overrides?: TransactionOverrides): Promise<ContractTransaction>;
+
     getStatus(): Promise<number>;
 
     getActiveAuctions(): Promise<BigNumber[]>;
@@ -106,6 +110,8 @@ export class IDaiBackstopSyndicate extends Contract {
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
 
+  ceaseFire(overrides?: TransactionOverrides): Promise<ContractTransaction>;
+
   getStatus(): Promise<number>;
 
   getActiveAuctions(): Promise<BigNumber[]>;
@@ -124,6 +130,8 @@ export class IDaiBackstopSyndicate extends Contract {
     enterAuction(auctionId: BigNumberish): Promise<BigNumber>;
 
     finalizeAuction(auctionId: BigNumberish): Promise<BigNumber>;
+
+    ceaseFire(): Promise<BigNumber>;
 
     getStatus(): Promise<BigNumber>;
 
