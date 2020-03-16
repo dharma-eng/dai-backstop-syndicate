@@ -20,7 +20,8 @@ library EnumerableSet {
    * Returns false if the value was already in the set.
    */
   function add(AuctionIDSet storage set, uint256 value)
-    internal returns (bool)
+    internal
+    returns (bool)
   {
     if (!contains(set, value)) {
       set.values.push(value);
@@ -38,7 +39,8 @@ library EnumerableSet {
    * Returns false if the value was not present in the set.
    */
   function remove(AuctionIDSet storage set, uint256 value)
-    internal returns (bool)
+    internal
+    returns (bool)
   {
     if (contains(set, value)){
       uint256 toDeleteIndex = set.index[value] - 1;
@@ -70,7 +72,9 @@ library EnumerableSet {
    * @dev Returns true if the value is in the set. O(1).
    */
   function contains(AuctionIDSet storage set, uint256 value)
-    internal view returns (bool)
+    internal
+    view
+    returns (bool)
   {
     return set.index[value] != 0;
   }
@@ -83,7 +87,9 @@ library EnumerableSet {
    * {get} instead in these cases.
    */
   function enumerate(AuctionIDSet storage set)
-    internal view returns (uint256[] memory)
+    internal
+    view
+    returns (uint256[] memory)
   {
     uint256[] memory output = new uint256[](set.values.length);
     for (uint256 i; i < set.values.length; i++){
@@ -96,21 +102,25 @@ library EnumerableSet {
    * @dev Returns the number of elements on the set. O(1).
    */
   function length(AuctionIDSet storage set)
-    internal view returns (uint256)
+    internal
+    view
+    returns (uint256)
   {
     return set.values.length;
   }
 
-  /** @dev Returns the element stored at position `index` in the set. O(1).
-   * Note that there are no guarantees on the ordering of values inside the
-   * array, and it may change when more values are added or removed.
-   *
-   * Requirements:
-   *
-   * - `index` must be strictly less than {length}.
-   */
+   /** @dev Returns the element stored at position `index` in the set. O(1).
+  * Note that there are no guarantees on the ordering of values inside the
+  * array, and it may change when more values are added or removed.
+  *
+  * Requirements:
+  *
+  * - `index` must be strictly less than {length}.
+  */
   function get(AuctionIDSet storage set, uint256 index)
-    internal view returns (uint256)
+    internal
+    view
+    returns (uint256)
   {
     return set.values[index];
   }

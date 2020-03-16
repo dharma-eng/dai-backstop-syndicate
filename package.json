@@ -11,24 +11,51 @@
     "ethereumjs-util": "6.1.0",
     "ethlint": "1.2.5",
     "js-sha256": "0.9.0",
-    "ganache-cli": "6.7.0",
     "solhint": "2.3.0",
     "solidity-coverage": "0.7.1",
-    "truffle": "5.1.4",
+    "truffle": "5.1.5",
     "web3": "1.2.1"
   },
   "devDependencies": {
+    "@types/chai-as-promised": "^7.1.0",
+    "@types/chai-string": "^1.4.1",
+    "@types/mocha": "^5.2.7",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^3.0.0",
+    "chai-string": "^1.5.0",
+    "ethers": "^4.0.44",
+    "ganache-cli": "6.4.4",
+    "ganache-core": "2.5.6",
     "husky": "^4.2.1",
     "lint-staged": "^9.2.1",
     "prettier": "1.16.4",
-    "pretty-quick": "^2.0.1"
+    "pretty-quick": "^2.0.1",
+    "solc": "0.5.16",
+    "truffle-contract": "^4.0.22",
+    "tslint": "^5.18.0",
+    "typechain": "^1.0.3",
+    "typechain-target-ethers": "^1.0.3"
   },
   "scripts": {
-    "build": "./node_modules/.bin/truffle compile",
+    "build": "rm -rf build && truffle compile --all && yarn gen:contract-typings && tsc -b",
     "lint": "./node_modules/.bin/solhint 'contracts/**/*.sol' && ./node_modules/.bin/solium -d ./contracts --no-soliumignore",
+    "clean": "rm -rf build && rm -rf typings/contracts",
+    "ganache": "ganache-cli --networkId ${npm_package_config_ganacheNetworkID} --port ${npm_package_config_ganachePort} --gasLimit ${npm_package_config_ganacheGasLimit} --gasPrice ${npm_package_config_ganacheGasPrice} --defaultBalanceEther ${npm_package_config_etherBalance} --deterministic --mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
+    "gen:contract-typings": "rm -f typings/contracts/* && typechain --target ethers --outDir typings/contracts './build/contracts/*.json'",
     "start": "./node_modules/.bin/ganache-cli --gasLimit 10000000 -e 10000 2>&1 > ganache-output.log & echo 'local chain started.'",
+    "test": "tsc -b && truffle test --network ganache build/*.spec.js",
     "stop": "kill -9 \"$(ps -ax | grep -m1 '[n]ode ./node_modules/.bin/ganache-cli' | awk '{print $1;}')\" && echo 'local chain stopped.'",
     "prettier": "prettier --write"
+  },
+  "config": {
+    "mnemonic": "throw square aware vote shop rude paper question convince fiber turtle culture",
+    "ganacheNetworkID": 127001,
+    "ganachePort": 8545,
+    "ganacheGasLimit": "0xfffffffffff",
+    "ganacheGasPrice": "2",
+    "etherBalance": "100000",
+    "extra": ""
   },
   "husky": {
     "hooks": {
