@@ -2,6 +2,9 @@ pragma solidity 0.5.16;
 
 
 interface IDaiBackstopSyndicate {
+  event AuctionEntered(uint256 auctionId, address bidder);
+  event AuctionFinalized(uint256 auctionId, address bidder);
+
   enum Status {
     ACCEPTING_DEPOSITS,
     ACTIVATED
@@ -13,10 +16,10 @@ interface IDaiBackstopSyndicate {
   // Anyone can withdraw at any point as long as Dai is not locked in auctions
   function defect(uint256 backstopTokenAmount) external returns (uint256 daiRedeemed, uint256 mkrRedeemed);
 
-  // Anyone can enter an auction, supplying 50,000 Dai in exchange for 500 MKR
+  // Anyone can enter an auction for the syndicate, bidding Dai in return for MKR
   function enterAuction(uint256 auctionId) external;
 
-  // (may not be necessary since this is just dent, no tend?)
+  // Anyone can finalize an auction, returning the Dai or MKR to the syndicate
   function finalizeAuction(uint256 auctionId) external;
 
   function getStatus() external view returns (Status status);

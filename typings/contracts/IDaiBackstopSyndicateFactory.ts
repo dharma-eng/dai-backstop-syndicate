@@ -21,6 +21,44 @@ export class IDaiBackstopSyndicateFactory {
 
 const _abi = [
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "auctionId",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "bidder",
+        type: "address"
+      }
+    ],
+    name: "AuctionEntered",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "auctionId",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "bidder",
+        type: "address"
+      }
+    ],
+    name: "AuctionFinalized",
+    type: "event"
+  },
+  {
     constant: false,
     inputs: [
       {

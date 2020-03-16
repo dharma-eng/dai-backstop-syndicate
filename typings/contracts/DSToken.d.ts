@@ -70,9 +70,7 @@ interface DSTokenInterface extends Interface {
       encode([guy, wad]: [string, BigNumberish]): string;
     }>;
 
-    burn: TypedFunctionDescription<{
-      encode([guy, wad]: [string, BigNumberish]): string;
-    }>;
+    burn: TypedFunctionDescription<{ encode([wad]: [BigNumberish]): string }>;
 
     setName: TypedFunctionDescription<{ encode([name_]: [Arrayish]): string }>;
   };
@@ -203,7 +201,6 @@ export class DSToken extends Contract {
     ): Promise<ContractTransaction>;
 
     burn(
-      guy: string,
       wad: BigNumberish,
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
@@ -291,7 +288,6 @@ export class DSToken extends Contract {
   ): Promise<ContractTransaction>;
 
   burn(
-    guy: string,
     wad: BigNumberish,
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
@@ -364,7 +360,7 @@ export class DSToken extends Contract {
 
     mint(guy: string, wad: BigNumberish): Promise<BigNumber>;
 
-    burn(guy: string, wad: BigNumberish): Promise<BigNumber>;
+    burn(wad: BigNumberish): Promise<BigNumber>;
 
     setName(name_: Arrayish): Promise<BigNumber>;
   };
