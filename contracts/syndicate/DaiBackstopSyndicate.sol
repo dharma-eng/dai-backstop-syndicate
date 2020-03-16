@@ -102,25 +102,33 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     uint256 daiLockedInAuctions = _getActiveAuctionDaiTotal();
 
     // Determine the Dai currently locked up on behalf of this contract.
-    uint256 daiBalance = _VAT.dai(address(this)) / 1e27;
+    uint256 vatDaiBalance = _VAT.dai(address(this));
 
     // Combine Dai locked in auctions with the balance on the contract.
-    uint256 combinedDai = daiLockedInAuctions.add(daiBalance);
+    uint256 combinedVatDai = daiLockedInAuctions.add(vatDaiBalance);
 
     // Determine the Maker currently held by the contract.
     uint256 makerBalance = _MKR.balanceOf(address(this));
 
     // Determine the amount of Dai and MKR to redeem based on the share.
-    daiRedeemed = combinedDai.mul(shareFloat) / 1e18;
+    uint256 vatDaiRedeemed = combinedVatDai.mul(shareFloat) / 1e18;
     mkrRedeemed = makerBalance.mul(shareFloat) / 1e18;
+
+    // daiRedeemed is the e18 version of vatDaiRedeemed (e45). Needed for dai token, otherwise we keep decimals of vatDai
+    daiRedeemed = vatDaiRedeemed / 1e27;
+
 
     // Ensure that sufficient Dai liquidity is currently available to withdraw.
     require(
-      daiRedeemed <= daiBalance, "DaiBackstopSyndicate/defect: Insufficient Dai (in use in auctions)"
+      vatDaiRedeemed <= vatDaiBalance, "DaiBackstopSyndicate/defect: Insufficient Dai (in use in auctions)"
     );
 
-    // Redeem the Dai and MKR.
-    _DAI_JOIN.exit(msg.sender, daiRedeemed);
+    // Redeem the Dai and MKR, giving user vatDai if global settlement, otherwise, tokens
+    if (isEnabled()) {
+      _DAI_JOIN.exit(msg.sender, daiRedeemed);
+    } else {
+      _VAT.move(address(this), msg.sender, vatDaiRedeemed);
+    }
     require(_MKR.transfer(msg.sender, mkrRedeemed), "DaiBackstopSyndicate/defect: MKR redemption failed.");
   }
 
@@ -197,7 +205,8 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
       // Dai bid size is returned from getCurrentBid with 45 decimals
       (auctionDai,, bidder,,) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
       if (bidder == address(this)) {
-        dai += (auctionDai / 1e27);
+        // we are keeping the 45 decimals in case we need to return vatDai
+        dai += auctionDai;
       }
     }
   }
