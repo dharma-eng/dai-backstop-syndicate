@@ -7,7 +7,8 @@ interface IDaiBackstopSyndicate {
 
   enum Status {
     ACCEPTING_DEPOSITS,
-    ACTIVATED
+    ACTIVATED,
+    DEACTIVATED
   }
 
   // Anyone can deposit Dai up until the auctions have started at 1:1
@@ -21,6 +22,9 @@ interface IDaiBackstopSyndicate {
 
   // Anyone can finalize an auction, returning the Dai or MKR to the syndicate
   function finalizeAuction(uint256 auctionId) external;
+
+  // An owner can halt all new deposits and auctions (but not withdrawals or ongoing auctions)
+  function ceaseFire() external;
 
   function getStatus() external view returns (Status status);
 

@@ -12,6 +12,8 @@ import {
 
 interface DaiBackstopSyndicateInterface extends Interface {
   functions: {
+    acceptOwnership: TypedFunctionDescription<{ encode([]: []): string }>;
+
     allowance: TypedFunctionDescription<{
       encode([owner, spender]: [string, string]): string;
     }>;
@@ -22,6 +24,10 @@ interface DaiBackstopSyndicateInterface extends Interface {
 
     balanceOf: TypedFunctionDescription<{
       encode([account]: [string]): string;
+    }>;
+
+    cancelOwnershipTransfer: TypedFunctionDescription<{
+      encode([]: []): string;
     }>;
 
     decreaseAllowance: TypedFunctionDescription<{
@@ -50,6 +56,10 @@ interface DaiBackstopSyndicateInterface extends Interface {
 
     isEnabled: TypedFunctionDescription<{ encode([]: []): string }>;
 
+    isOwner: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    owner: TypedFunctionDescription<{ encode([]: []): string }>;
+
     totalSupply: TypedFunctionDescription<{ encode([]: []): string }>;
 
     transfer: TypedFunctionDescription<{
@@ -62,6 +72,10 @@ interface DaiBackstopSyndicateInterface extends Interface {
         string,
         BigNumberish
       ]): string;
+    }>;
+
+    transferOwnership: TypedFunctionDescription<{
+      encode([newOwner]: [string]): string;
     }>;
 
     enlist: TypedFunctionDescription<{
@@ -79,6 +93,8 @@ interface DaiBackstopSyndicateInterface extends Interface {
     finalizeAuction: TypedFunctionDescription<{
       encode([auctionId]: [BigNumberish]): string;
     }>;
+
+    ceaseFire: TypedFunctionDescription<{ encode([]: []): string }>;
 
     getStatus: TypedFunctionDescription<{ encode([]: []): string }>;
 
@@ -100,6 +116,13 @@ interface DaiBackstopSyndicateInterface extends Interface {
 
     AuctionFinalized: TypedEventDescription<{
       encodeTopics([auctionId]: [null]): string[];
+    }>;
+
+    OwnershipTransferred: TypedEventDescription<{
+      encodeTopics([previousOwner, newOwner]: [
+        string | null,
+        string | null
+      ]): string[];
     }>;
 
     Transfer: TypedEventDescription<{
@@ -129,6 +152,10 @@ export class DaiBackstopSyndicate extends Contract {
   interface: DaiBackstopSyndicateInterface;
 
   functions: {
+    acceptOwnership(
+      overrides?: TransactionOverrides
+    ): Promise<ContractTransaction>;
+
     allowance(owner: string, spender: string): Promise<BigNumber>;
 
     approve(
@@ -138,6 +165,10 @@ export class DaiBackstopSyndicate extends Contract {
     ): Promise<ContractTransaction>;
 
     balanceOf(account: string): Promise<BigNumber>;
+
+    cancelOwnershipTransfer(
+      overrides?: TransactionOverrides
+    ): Promise<ContractTransaction>;
 
     decreaseAllowance(
       spender: string,
@@ -187,6 +218,10 @@ export class DaiBackstopSyndicate extends Contract {
 
     isEnabled(): Promise<boolean>;
 
+    isOwner(): Promise<boolean>;
+
+    owner(): Promise<string>;
+
     totalSupply(): Promise<BigNumber>;
 
     transfer(
@@ -199,6 +234,11 @@ export class DaiBackstopSyndicate extends Contract {
       sender: string,
       recipient: string,
       amount: BigNumberish,
+      overrides?: TransactionOverrides
+    ): Promise<ContractTransaction>;
+
+    transferOwnership(
+      newOwner: string,
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
@@ -222,10 +262,16 @@ export class DaiBackstopSyndicate extends Contract {
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
+    ceaseFire(overrides?: TransactionOverrides): Promise<ContractTransaction>;
+
     getStatus(): Promise<number>;
 
     getActiveAuctions(): Promise<BigNumber[]>;
   };
+
+  acceptOwnership(
+    overrides?: TransactionOverrides
+  ): Promise<ContractTransaction>;
 
   allowance(owner: string, spender: string): Promise<BigNumber>;
 
@@ -236,6 +282,10 @@ export class DaiBackstopSyndicate extends Contract {
   ): Promise<ContractTransaction>;
 
   balanceOf(account: string): Promise<BigNumber>;
+
+  cancelOwnershipTransfer(
+    overrides?: TransactionOverrides
+  ): Promise<ContractTransaction>;
 
   decreaseAllowance(
     spender: string,
@@ -285,6 +335,10 @@ export class DaiBackstopSyndicate extends Contract {
 
   isEnabled(): Promise<boolean>;
 
+  isOwner(): Promise<boolean>;
+
+  owner(): Promise<string>;
+
   totalSupply(): Promise<BigNumber>;
 
   transfer(
@@ -297,6 +351,11 @@ export class DaiBackstopSyndicate extends Contract {
     sender: string,
     recipient: string,
     amount: BigNumberish,
+    overrides?: TransactionOverrides
+  ): Promise<ContractTransaction>;
+
+  transferOwnership(
+    newOwner: string,
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
 
@@ -320,6 +379,8 @@ export class DaiBackstopSyndicate extends Contract {
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
 
+  ceaseFire(overrides?: TransactionOverrides): Promise<ContractTransaction>;
+
   getStatus(): Promise<number>;
 
   getActiveAuctions(): Promise<BigNumber[]>;
@@ -335,15 +396,24 @@ export class DaiBackstopSyndicate extends Contract {
 
     AuctionFinalized(auctionId: null): EventFilter;
 
+    OwnershipTransferred(
+      previousOwner: string | null,
+      newOwner: string | null
+    ): EventFilter;
+
     Transfer(from: string | null, to: string | null, value: null): EventFilter;
   };
 
   estimate: {
+    acceptOwnership(): Promise<BigNumber>;
+
     allowance(owner: string, spender: string): Promise<BigNumber>;
 
     approve(spender: string, value: BigNumberish): Promise<BigNumber>;
 
     balanceOf(account: string): Promise<BigNumber>;
+
+    cancelOwnershipTransfer(): Promise<BigNumber>;
 
     decreaseAllowance(
       spender: string,
@@ -369,6 +439,10 @@ export class DaiBackstopSyndicate extends Contract {
 
     isEnabled(): Promise<BigNumber>;
 
+    isOwner(): Promise<BigNumber>;
+
+    owner(): Promise<BigNumber>;
+
     totalSupply(): Promise<BigNumber>;
 
     transfer(recipient: string, amount: BigNumberish): Promise<BigNumber>;
@@ -379,6 +453,8 @@ export class DaiBackstopSyndicate extends Contract {
       amount: BigNumberish
     ): Promise<BigNumber>;
 
+    transferOwnership(newOwner: string): Promise<BigNumber>;
+
     enlist(daiAmount: BigNumberish): Promise<BigNumber>;
 
     defect(backstopTokenAmount: BigNumberish): Promise<BigNumber>;
@@ -386,6 +462,8 @@ export class DaiBackstopSyndicate extends Contract {
     enterAuction(auctionId: BigNumberish): Promise<BigNumber>;
 
     finalizeAuction(auctionId: BigNumberish): Promise<BigNumber>;
+
+    ceaseFire(): Promise<BigNumber>;
 
     getStatus(): Promise<BigNumber>;
 
