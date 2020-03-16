@@ -95,11 +95,11 @@ interface DaiBackstopSyndicateInterface extends Interface {
     }>;
 
     AuctionEntered: TypedEventDescription<{
-      encodeTopics([auctionId, bidder]: [null, null]): string[];
+      encodeTopics([auctionId, mkrAsk, daiBid]: [null, null, null]): string[];
     }>;
 
     AuctionFinalized: TypedEventDescription<{
-      encodeTopics([auctionId, bidder]: [null, null]): string[];
+      encodeTopics([auctionId]: [null]): string[];
     }>;
 
     Transfer: TypedEventDescription<{
@@ -331,9 +331,9 @@ export class DaiBackstopSyndicate extends Contract {
       value: null
     ): EventFilter;
 
-    AuctionEntered(auctionId: null, bidder: null): EventFilter;
+    AuctionEntered(auctionId: null, mkrAsk: null, daiBid: null): EventFilter;
 
-    AuctionFinalized(auctionId: null, bidder: null): EventFilter;
+    AuctionFinalized(auctionId: null): EventFilter;
 
     Transfer(from: string | null, to: string | null, value: null): EventFilter;
   };

@@ -4,7 +4,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "./Bidder.sol";
 import "./SimpleFlopper.sol";
 import "./EnumerableSet.sol";
 import "../interfaces/IDaiBackstopSyndicate.sol";
@@ -21,9 +20,6 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
 
   // Track each active auction as an enumerable set.
   EnumerableSet.AuctionIDSet internal _activeAuctions;
-
-  // Track the bidder address for each entered auction.
-  mapping(uint256 => address) internal _bidders;
 
   // The backstop price is 100 Dai for 1 MKR (logic implemented in bidder)
   uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
@@ -131,45 +127,56 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   /// @notice Triggers syndicate participation in an auction, bidding 50k DAI for 500 MKR
   /// @param auctionId ID of the auction to participate in
   function enterAuction(uint256 auctionId) external {
-    // Ensure that the auction in question has not already been entered
     require(
-      _bidders[auctionId] == address(0x0),
-      "DaiBackstopSyndicate/enterAuction: Already participating in this auction"
+      !_activeAuctions.contains(auctionId),
+      "DaiBackstopSyndicate/enterAuction: Auction already active"
     );
 
-    // Create auction's Bidder contract and approve it for VAT
-    Bidder bidder = new Bidder(SimpleFlopper.getFlopperAddress(), auctionId);
-    _bidders[auctionId] = address(bidder);
-    _VAT.hope(address(bidder));
+    // dai has 45 decimal places
+    (uint256 amountDai, , , , ) = SimpleFlopper.getCurrentBid(auctionId);
 
-    // Submit Bid. Should revert if bid is invalid
-    bidder.submitBid();
+    // lot needs to have 18 decimal places, and we're expecting 1 mkr == 100 dai
+    uint256 expectedLot = (amountDai / 1e27) / 100;
 
-    // Prevent further deposits
+    // Place the bid, reverting on failure.
+    SimpleFlopper._bid(auctionId, expectedLot, amountDai);
+
+    // Prevent further deposits.
     if (_status != Status.ACTIVATED) {
       _status = Status.ACTIVATED;
     }
 
-    // Register auction if successful participation
+    // Register auction if successful participation.
     _activeAuctions.add(auctionId);
 
     // Emit an event to signal that the auction was entered.
-    emit AuctionEntered(auctionId, address(bidder));
+    emit AuctionEntered(auctionId, expectedLot, amountDai);
   }
 
   // Anyone can finalize an auction if it's ready
   function finalizeAuction(uint256 auctionId) external {
-    // Determine the bidder for the auction in question.
-    Bidder bidder = Bidder(_bidders[auctionId]);
+    require(
+      _activeAuctions.contains(auctionId),
+      "DaiBackstopSyndicate/enterAuction: Auction already finalized"
+    );
 
-    // Finalize auction from bidder, sending Dai or MKR back to this contract.
-    bidder.finalize();
+    // If auction was finalized, end should be 0x0.
+    (,, address bidder,, uint48 end) = SimpleFlopper.getCurrentBid(auctionId);
+
+    // If auction isn't closed, we try to close it ourselves
+    if (end != 0) {
+      // If we are the winning bidder, we finalize the auction
+      // Otherwise we got outbid and we withdraw DAI
+      if (bidder == address(this)) {
+        SimpleFlopper._finalize(auctionId);
+      }
+    }
 
     // Remove the auction from the set of active auctions.
     _activeAuctions.remove(auctionId);
 
     // Emit an event to signal that the auction was finalized.
-    emit AuctionFinalized(auctionId, address(bidder));
+    emit AuctionFinalized(auctionId);
   }
 
   function getStatus() external view returns (Status status) {
@@ -185,10 +192,13 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
     uint256[] memory activeAuctions = _activeAuctions.enumerate();
 
     uint256 auctionDai;
+    address bidder;
     for (uint256 i = 0; i < activeAuctions.length; i++) {
       // Dai bid size is returned from getCurrentBid with 45 decimals
-      (auctionDai, , , , ) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
-      dai += (auctionDai / 1e27);
+      (auctionDai,, bidder,,) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
+      if (bidder == address(this)) {
+        dai += (auctionDai / 1e27);
+      }
     }
   }
 }

@@ -2,8 +2,8 @@ pragma solidity 0.5.16;
 
 
 interface IDaiBackstopSyndicate {
-  event AuctionEntered(uint256 auctionId, address bidder);
-  event AuctionFinalized(uint256 auctionId, address bidder);
+  event AuctionEntered(uint256 auctionId, uint256 mkrAsk, uint256 daiBid);
+  event AuctionFinalized(uint256 auctionId);
 
   enum Status {
     ACCEPTING_DEPOSITS,

@@ -31,9 +31,15 @@ const _abi = [
       },
       {
         indexed: false,
-        internalType: "address",
-        name: "bidder",
-        type: "address"
+        internalType: "uint256",
+        name: "mkrAsk",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "daiBid",
+        type: "uint256"
       }
     ],
     name: "AuctionEntered",
@@ -47,12 +53,6 @@ const _abi = [
         internalType: "uint256",
         name: "auctionId",
         type: "uint256"
-      },
-      {
-        indexed: false,
-        internalType: "address",
-        name: "bidder",
-        type: "address"
       }
     ],
     name: "AuctionFinalized",
