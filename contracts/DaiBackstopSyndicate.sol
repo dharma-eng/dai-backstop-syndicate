@@ -4,7 +4,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+import "./Bidder.sol";
 import "./SimpleFlopper.sol";
+import "./EnumerableSet.sol";
 import "../interfaces/DaiBackstopSyndicateInterface.sol";
 import "../interfaces/IJoin.sol";
 import "../interfaces/IVat.sol";
@@ -12,12 +14,16 @@ import "../interfaces/IVat.sol";
 
 contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, ERC20 {
   using SafeMath for uint256;
+  using EnumerableSet for EnumerableSet.AuctionIDSet;
 
   // Track the status of the Syndicate.
   Status internal _status;
 
-  // Track the number of active auctions (TODO: update this as part of withdraw)
-  uint256 internal _activeAuctions;
+  // Track each active auction as an enumerable set.
+  EnumerableSet.AuctionIDSet internal _activeAuctions;
+
+  // Track the bidder address for each entered auction.
+  mapping(uint256 => address) internal _bidders;
 
   // Syndicate can be activated once auctions start (TODO: determine this time!)
   uint256 internal constant _AUCTION_START_TIME = 1584490000;
@@ -47,17 +53,20 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     _DAI.approve(address(_DAI_JOIN), uint256(-1));
   }
 
+  /// @notice User deposits DAI in the BackStop Syndicate and receives Syndicate shares
+  /// @param daiAmount Amount of DAI to deposit 
+  /// @return Amount of Backstop Syndicate shares participant receives
   function enlist(
     uint256 daiAmount
   ) external returns (uint256 backstopTokensMinted) {
     require(
       _status == Status.ACCEPTING_DEPOSITS,
-      "Cannot deposit once auctions are activated."
+      "DaiBackstopSyndicate/enlist: Cannot deposit once the first auction bid has been made."
     );
 
     require(
       _DAI.transferFrom(msg.sender, address(this), daiAmount),
-      "Could not transfer Dai amount from caller."
+      "DaiBackstopSyndicate/enlist: Could not transfer Dai amount from caller."
     );
 
     _DAI_JOIN.join(address(this), daiAmount);
@@ -66,6 +75,10 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     _mint(msg.sender, backstopTokensMinted);
   }
 
+  /// @notice User withdraws DAI and MKR from BackStop Syndicate based on Syndicate shares owned
+  /// @param backstopTokenAmount Amount of shares to burn
+  /// @return daiRedeemed: Amount of DAI withdrawn
+  /// @return mkrRedeemed: Amount of MKR withdrawn
   function defect(
     uint256 backstopTokenAmount
   ) external returns (uint256 daiRedeemed, uint256 mkrRedeemed) {
@@ -75,10 +88,8 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
     // Burn the tokens.
     _burn(msg.sender, backstopTokenAmount);
 
-    // TODO: make sure that _activeAuctions is accurate!
-
-    // Determine the Dai currently locked in auctions.
-    uint256 daiLockedInAuctions = _activeAuctions.mul(50000 * 1e18);
+    // Determine the Dai currently being used to bid in auctions.
+    uint256 daiLockedInAuctions = _getActiveAuctionDaiTotal();
 
     // Determine the Dai currently locked up on behalf of this contract.
     uint256 daiBalance = _VAT.dai(address(this));
@@ -95,86 +106,67 @@ contract DaiBackstopSyndicate is DaiBackstopSyndicateInterface, SimpleFlopper, E
 
     // Ensure that sufficient Dai liquidity is currently available to withdraw.
     require(
-      daiRedeemed <= daiBalance, "Insufficient Dai (in use in auctions)"
+      daiRedeemed <= daiBalance, "DaiBackstopSyndicate/defect: Insufficient Dai (in use in auctions)"
     );
 
     // Redeem the Dai and MKR.
     _DAI_JOIN.exit(msg.sender, daiRedeemed);
-    require(_MKR.transfer(msg.sender, mkrRedeemed), "MKR redemption failed.");
+    require(_MKR.transfer(msg.sender, mkrRedeemed), "DaiBackstopSyndicate/defect: MKR redemption failed.");
   }
 
-  function activate() external {
-    require(
-      _status == Status.ACCEPTING_DEPOSITS,
-      "Cannot activate again after a prior activation."
-    );
-
-    require(
-      block.timestamp >= _AUCTION_START_TIME,
-      "Cannot activate until MKR auctions have started."
-    );
-
-    // Determine the Dai currently held by the contract.
-    uint256 daiBalance = _DAI.balanceOf(address(this));
-
-    // Jump straight to deactivated if there is not enough dai to make auctions.
-    if (daiBalance < 50000 * 1e18) {
-      _status = Status.DEACTIVATED;
-    } else {
-      // Set the status as active.
-      _status = Status.ACTIVATED;
-    }
-  }
-
-  // Anyone can enter an auction, supplying 50,000 Dai in exchange for 500 MKR
+  /// @notice Triggers syndicate participation in an auction, bidding 50k DAI for 500 MKR
+  /// @param auctionId ID of the auction to participate in
   function enterAuction(uint256 auctionId) external {
     require(
-      _status == Status.ACTIVATED,
-      "Cannot enter an auction unless this contract is activated."
+      block.timestamp >= _AUCTION_START_TIME,
+      "DaiBackstopSyndicate/enterAuction: Cannot enter an auction before they have started."
     );
 
-    // Determine the Dai currently held by the contract.
-    uint256 daiBalance = _DAI.balanceOf(address(this));
-
+    // Ensure that the auction in question has not already been entered
     require(
-      daiBalance >= 50000 * 1e18, "Insufficient Dai available for auction."
+      _bidders[auctionId] == address(0x0), 
+      "DaiBackstopSyndicate/enterAuction: Already participating in this auction"
     );
 
-    // TODO: ensure that the auction in question has not already been entered?
+    // Create auction's Bidder contract and approve it for VAT 
+    Bidder bidder = new Bidder(SimpleFlopper.getFlopperAddress(), auctionId);
+    _bidders[auctionId] = address(bidder);
+    _VAT.hope(address(bidder));
 
-    // TODO: ensure that the current bid is not at a higher price than backstop.
+    // Submit Bid. Should revert if bid is invalid
+    bidder.submitBid();
 
-    // Enter the auction.
-    _bid(auctionId, 500 * 1e18, 50000 * 1e18);
+    // Prevent further deposits
+    if (_status != Status.ACTIVATED) {
+      _status = Status.ACTIVATED;
+    }
 
-    _activeAuctions = _activeAuctions.add(1);
+    // Register auction if successful participation
+    _activeAuctions.add(auctionId);
   }
 
-  // (may not be necessary since this is just dent, no tend?)
+  // Anyone can finalize an auction if it's ready
   function finalizeAuction(uint256 auctionId) external {
-    // TODO: ensure that we are in the auction
-
-    // TODO: finalize auction
-
-    _activeAuctions = _activeAuctions.sub(1);
-  }
-
-  function deactivate() external {
-    require(
-      _status == Status.ACTIVATED,
-      "Cannot deactivate unless currently active."
-    );
-
-    // TODO: determine that MKR auction is over (check the surplus?)
-
-    _status = Status.DEACTIVATED;
+    Bidder(_bidders[auctionId]).finalize();
+    _activeAuctions.remove(auctionId);
   }
 
   function getStatus() external view returns (Status status) {
     status = _status;
   }
 
-  function getActiveAuctions() external view returns (uint256 activeAuctions) {
-    activeAuctions = _activeAuctions;
+  function getActiveAuctions() external view returns (uint256[] memory activeAuctions) {
+    activeAuctions = _activeAuctions.enumerate();
+  }
+
+  function _getActiveAuctionDaiTotal() internal view returns (uint256 dai) {
+    dai = 0;
+    uint256[] memory activeAuctions = _activeAuctions.enumerate();
+
+    uint256 auctionDai;
+    for (uint256 i = 0; i < activeAuctions.length; i++) {
+      (auctionDai, , , , ) = SimpleFlopper.getCurrentBid(activeAuctions[i]);
+      dai += auctionDai;
+    }
   }
 }

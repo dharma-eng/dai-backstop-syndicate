@@ -38,6 +38,12 @@ contract SimpleFlopper {
     return _auction.vat();
   }
 
+  /// @notice Get the address of the auction contract (Flopper)
+  /// @return Auction address
+  function getFlopperAddress() public view returns (address flopper) {
+    return address(_auction);
+  }
+
   /// @notice Get the flopper contract config
   /// @return bidIncrement uint256 minimum bid increment as percentage (initial = 1.05E18)
   /// @return repriceIncrement uint256 reprice increment as percentage (initial = 1.50E18)
@@ -65,8 +71,7 @@ contract SimpleFlopper {
     uint48 bidDeadline,
     uint48 auctionDeadline
   ) {
-    IFlopper.Bid memory bid = _auction.bids(auctionID);
-    return (bid.bid, bid.lot, bid.guy, bid.tic, bid.end);
+    return _auction.bids(auctionID);
   }
 
   // Setters //

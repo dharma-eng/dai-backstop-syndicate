@@ -16,34 +16,54 @@ contract Bidder is SimpleFlopper {
   );
 
   address public owner;
-  uint256 public bid;
-  uint256 public amountBid;
+  uint256 public auctionID;
   uint256 public expectedLot;
+  bool public bidSubmited;
 
-  constructor(uint256 bid_) public {
+  /// @param auctionID_ ID of auction to participate in
+  constructor(address auctionAddress_, uint256 auctionID_) public SimpleFlopper(auctionAddress_) {
     owner = msg.sender;
-    bid = bid_;
+    auctionID = auctionID_;
   }
 
+  /// @notice Enters a given auction with bid of 1 mkr == 100 DAI
   function submitBid() external {
     require(msg.sender == owner, "Bidder/submitBid: owner only");
+    require(!bidSubmited, "Bidder/submitBid: bid alread bid submited");
 
-    (uint256 amountDai, , , , ) = getCurrentBid(bid);
+    // dai has 45 decimal places
+    (uint256 amountDai, , , , ) = SimpleFlopper.getCurrentBid(auctionID);
 
-    amountBid = amountDai;
-    expectedLot = amountDai / 100;
+    // lot needs to have 18 decimal places, and we're expecting 1 mkr == 100 dai
+    expectedLot = (amountDai / 1e27) / 100;
 
-    _VAT.move(owner, address(this), amountBid);
-    _bid(bid, expectedLot, amountBid); // 100 dai = 1 mkr
+    _VAT.move(owner, address(this), amountDai);
+    // ??? Does our Bidder need to approve the Flopper?
+    SimpleFlopper._bid(auctionID, expectedLot, amountDai);
+
+    // Mark bid as successful 
+    bidSubmited = true;
   }
 
+  // Will withdraw funds to owner if auction is concluded or outbidded
   function finalize() external returns (bool) {
     require(msg.sender == owner, "Bidder/finalize: owner only");
+    require(bidSubmited, "Bidder/finalize: Bid not yet submitted");
 
-    ( , , , , uint48 end) = getCurrentBid(bid);
-    require(end == 0, "Bidder/finalize: auction not finished");
+    // If auction was finalized, end should be 0x0.
+    ( , ,address bidder, , uint48 end) = SimpleFlopper.getCurrentBid(auctionID);
+
+    // If auction isn't closed, we try to close it ourselves
+    if (end != 0) {
+      // If we are the winning bidder, we finalize the auction
+      // Otherwise we got outbid and we withdraw DAI
+      if (bidder == address(this)) {
+        SimpleFlopper._finalize(auctionID);
+      } 
+    }
 
     uint256 mkrBalance = _MKR.balanceOf(address(this));
+    uint256 daiBalance = _VAT.dai(address(this));
 
     bool didWin = mkrBalance >= expectedLot;
 
@@ -51,6 +71,10 @@ contract Bidder is SimpleFlopper {
       require(
         _MKR.transfer(owner, mkrBalance), "Bidder/finalize: transfer failed"
       );
+    }
+
+    if (daiBalance > 0) {
+      _VAT.move(address(this), owner, daiBalance);
     }
 
     return didWin;
