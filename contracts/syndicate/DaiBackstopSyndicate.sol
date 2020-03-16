@@ -25,9 +25,6 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   // Track the bidder address for each entered auction.
   mapping(uint256 => address) internal _bidders;
 
-  // Syndicate can be activated once auctions start (TODO: determine this time!)
-  uint256 internal constant _AUCTION_START_TIME = 1584490000;
-
   // The backstop price is 100 Dai for 1 MKR.
   uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
 
@@ -134,11 +131,6 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
   /// @notice Triggers syndicate participation in an auction, bidding 50k DAI for 500 MKR
   /// @param auctionId ID of the auction to participate in
   function enterAuction(uint256 auctionId) external {
-    require(
-      block.timestamp >= _AUCTION_START_TIME,
-      "DaiBackstopSyndicate/enterAuction: Cannot enter an auction before they have started."
-    );
-
     // Ensure that the auction in question has not already been entered
     require(
       _bidders[auctionId] == address(0x0),
@@ -160,12 +152,24 @@ contract DaiBackstopSyndicate is IDaiBackstopSyndicate, SimpleFlopper, ERC20 {
 
     // Register auction if successful participation
     _activeAuctions.add(auctionId);
+
+    // Emit an event to signal that the auction was entered.
+    emit AuctionEntered(auctionId, bidder);
   }
 
   // Anyone can finalize an auction if it's ready
   function finalizeAuction(uint256 auctionId) external {
-    Bidder(_bidders[auctionId]).finalize();
+    // Determine the bidder for the auction in question.
+    address bidder = _bidders[auctionId];
+    
+    // Finalize auction from bidder, sending Dai or MKR back to this contract.
+    Bidder(bidder).finalize();
+    
+    // Remove the auction from the set of active auctions.
     _activeAuctions.remove(auctionId);
+    
+    // Emit an event to signal that the auction was finalized.
+    emit AuctionFinalized(auctionId, bidder);
   }
 
   function getStatus() external view returns (Status status) {
