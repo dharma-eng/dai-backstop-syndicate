@@ -29,7 +29,7 @@ contract Bidder is SimpleFlopper {
   /// @notice Enters a given auction with bid of 1 mkr == 100 DAI
   function submitBid() external {
     require(msg.sender == owner, "Bidder/submitBid: owner only");
-    require(!bidSubmited, "Bidder/submitBid: bid alread bid submited");
+    require(!bidSubmited, "Bidder/submitBid: bid already submitted");
 
     // dai has 45 decimal places
     (uint256 amountDai, , , , ) = SimpleFlopper.getCurrentBid(auctionID);
