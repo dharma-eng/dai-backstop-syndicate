@@ -1,7 +1,7 @@
 import * as ethers from 'ethers'
 
-import { 
-  AbstractContract, 
+import {
+  AbstractContract,
   expect,
   RevertError,
   ZERO_ADDRESS,
@@ -17,7 +17,6 @@ import { DaiJoin } from 'typings/contracts/DaiJoin'
 import { MkrAuthority } from 'typings/contracts/MkrAuthority'
 import { DaiBackstopSyndicate } from 'typings/contracts/DaiBackstopSyndicate'
 import { BigNumber } from 'ethers/utils';
-import { Zero } from 'ethers/constants'
 
 // init test wallets from package.json mnemonic
 const web3 = (global as any).web3
@@ -46,7 +45,7 @@ const {
   signer: randomSigner
 } = utils.createTestWallet(web3, 5)
 
-const getBig = (id: number) => new BigNumber(id);
+const e27 = new BigNumber(10).pow(27);
 
 contract('DaiBackstopSyndicate', (accounts: string[]) => {
   let ownerAddress: string
@@ -97,7 +96,7 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
   // Parameters
   let AUCTION_START_TIME: number = 1584490000
   let user_dai_balance: BigNumber = new BigNumber(50000).mul(decimals)
-  let enlist_amount: BigNumber = new BigNumber(1000).mul(decimals) 
+  let enlist_amount: BigNumber = new BigNumber(1000).mul(decimals)
 
   // Ganache is often wrong with gas_estimation when doing cross-contract calls
   // so we use a high hard-coded gasLimit when needed
@@ -129,7 +128,7 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
     authAddress = authOwnerContract.address
 
     // Deploy MKR
-    let sym = ethers.utils.formatBytes32String("MKR") 
+    let sym = ethers.utils.formatBytes32String("MKR")
     mkrOwnerContract = await mkrAbstract.deploy(ownerWallet, [sym]) as DSToken
     mkrConstract = await mkrOwnerContract.connect(userSigner) as DSToken
     mkrAddress = mkrOwnerContract.address
@@ -146,7 +145,7 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
 
     // Deploy DaiJoin
     daiJoinOwnerContract = await daiJoinAbstract.deploy(ownerWallet, [
-      vatAddress, 
+      vatAddress,
       daiAddress
     ]) as DaiJoin
     daiJoinConstract = await daiJoinOwnerContract.connect(userSigner) as DaiJoin
@@ -163,21 +162,20 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
     ]) as DaiBackstopSyndicate
     syndicateConstract = await syndicateOwnerContract.connect(userSigner) as DaiBackstopSyndicate
     syndicateAddress = syndicateOwnerContract.address
-    
     // Set Authorities contract
     await mkrOwnerContract.functions.setAuthority(authAddress)
     await authOwnerContract.functions.rely(flopAddress)
 
     // Mint some DAI to users
     await daiOwnerContract.functions.mint(userAddress, user_dai_balance)
+    // Burden 0 address with sin to generate vatDai for daiJoin, to match the falsely created DAI
+    await vatOwnerContract.suck(ZERO_ADDRESS, daiJoinAddress, user_dai_balance.mul(e27))
 
     // Set user DAI approvals for transfers
     await daiConstract.functions.approve(syndicateAddress, user_dai_balance)
-    
     // TO DO
     // Need to set-up DAI_JOIN because right now no-one can dai_join.join()
     // since vat.dai[dai_join] is empty. Tests are failing because of this.
-    
   })
 
   describe('Getter functions', () => {
