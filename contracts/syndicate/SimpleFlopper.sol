@@ -26,18 +26,6 @@ contract SimpleFlopper {
     return _auction.kicks();
   }
 
-  /// @notice Get the address of the MKR token
-  /// @return MKR address of maker token
-  function getMKRAddress() public view returns (address mkr) {
-    return _auction.gem();
-  }
-
-  /// @notice Get the address of the DAI token
-  /// @return DAI address of maker token
-  function getDaiAddress() public view returns (address dai) {
-    return _auction.vat();
-  }
-
   /// @notice Get the address of the auction contract (Flopper)
   /// @return Auction address
   function getFlopperAddress() public view returns (address flopper) {

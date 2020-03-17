@@ -2,6 +2,7 @@ pragma solidity 0.5.16;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./SimpleFlopper.sol";
@@ -16,7 +17,8 @@ contract DaiBackstopSyndicate is
   IDaiBackstopSyndicate,
   SimpleFlopper,
   TwoStepOwnable,
-  ERC20
+  ERC20,
+  ERC20Detailed
 {
   using SafeMath for uint256;
   using EnumerableSet for EnumerableSet.AuctionIDSet;
@@ -26,9 +28,6 @@ contract DaiBackstopSyndicate is
 
   // Track each active auction as an enumerable set.
   EnumerableSet.AuctionIDSet internal _activeAuctions;
-
-  // The backstop price is 100 Dai for 1 MKR (logic implemented in bidder)
-  uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
 
   // IERC20 internal constant _DAI = IERC20(
   //   0x6B175474E89094C44Da98b954EedeAC495271d0F
@@ -57,7 +56,10 @@ contract DaiBackstopSyndicate is
     address daiJoin_,
     address vat_,
     address flopper_
-  ) SimpleFlopper(flopper_) public
+  )
+    SimpleFlopper(flopper_)
+    ERC20Detailed("Dai Backstop Syndicate - 100", "DBS-100", 18)
+    public
   {
     _status = Status.ACCEPTING_DEPOSITS;
     _DAI = IERC20(dai_);
