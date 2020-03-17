@@ -58,7 +58,7 @@ contract DaiBackstopSyndicate is
     address flopper_
   )
     SimpleFlopper(flopper_)
-    ERC20Detailed("Dai Backstop Syndicate - 100", "DBS-100", 18)
+    ERC20Detailed("Dai Backstop Syndicate v1-100", "DBSv1-100", 18)
     public
   {
     _status = Status.ACCEPTING_DEPOSITS;
