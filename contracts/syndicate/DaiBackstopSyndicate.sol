@@ -29,9 +29,6 @@ contract DaiBackstopSyndicate is
   // Track each active auction as an enumerable set.
   EnumerableSet.AuctionIDSet internal _activeAuctions;
 
-  // The backstop price is 100 Dai for 1 MKR (logic implemented in bidder)
-  uint256 internal constant _MKR_BACKSTOP_BID_PRICE_DENOMINATED_IN_DAI = 100;
-
   // IERC20 internal constant _DAI = IERC20(
   //   0x6B175474E89094C44Da98b954EedeAC495271d0F
   // );
