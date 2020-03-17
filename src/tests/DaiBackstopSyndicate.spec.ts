@@ -54,43 +54,43 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
   // Dai
   let daiAbstract: AbstractContract
   let daiOwnerContract: Dai
-  let daiConstract: Dai
+  let daiContract: Dai
   let daiAddress: string
 
   // MKR
   let mkrAbstract: AbstractContract
   let mkrOwnerContract: DSToken
-  let mkrConstract: DSToken
+  let mkrContract: DSToken
   let mkrAddress: string
 
   // Authority
   let authAbstract: AbstractContract
   let authOwnerContract: MkrAuthority
-  let authConstract: MkrAuthority
+  let authContract: MkrAuthority
   let authAddress: string
 
   // VAT
   let vatAbstract: AbstractContract
   let vatOwnerContract: Vat
-  let vatConstract: Vat
+  let vatContract: Vat
   let vatAddress: string
 
   // VAT
   let daiJoinAbstract: AbstractContract
   let daiJoinOwnerContract: DaiJoin
-  let daiJoinConstract: DaiJoin
+  let daiJoinContract: DaiJoin
   let daiJoinAddress: string
 
   // Flopper
   let flopAbstract: AbstractContract
   let flopOwnerContract: Flopper
-  let flopConstract: Flopper
+  let flopContract: Flopper
   let flopAddress: string
 
   // Syndicate
   let syndicateAbstract: AbstractContract
   let syndicateOwnerContract: DaiBackstopSyndicate
-  let syndicateConstract: DaiBackstopSyndicate
+  let syndicateContract: DaiBackstopSyndicate
   let syndicateAddress: string
 
   // Parameters
@@ -119,28 +119,28 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
   beforeEach(async () => {
     // Deploy DAI
     daiOwnerContract = await daiAbstract.deploy(ownerWallet, [1]) as Dai
-    daiConstract = await daiOwnerContract.connect(userSigner) as Dai
+    daiContract = await daiOwnerContract.connect(userSigner) as Dai
     daiAddress = daiOwnerContract.address
 
     // Deploy Authority
     authOwnerContract = await authAbstract.deploy(ownerWallet) as MkrAuthority
-    authConstract = await authOwnerContract.connect(userSigner) as MkrAuthority
+    authContract = await authOwnerContract.connect(userSigner) as MkrAuthority
     authAddress = authOwnerContract.address
 
     // Deploy MKR
     let sym = ethers.utils.formatBytes32String("MKR")
     mkrOwnerContract = await mkrAbstract.deploy(ownerWallet, [sym]) as DSToken
-    mkrConstract = await mkrOwnerContract.connect(userSigner) as DSToken
+    mkrContract = await mkrOwnerContract.connect(userSigner) as DSToken
     mkrAddress = mkrOwnerContract.address
 
     // Deploy VAT
     vatOwnerContract = await vatAbstract.deploy(ownerWallet) as Vat
-    vatConstract = await vatOwnerContract.connect(userSigner) as Vat
+    vatContract = await vatOwnerContract.connect(userSigner) as Vat
     vatAddress = vatOwnerContract.address
 
     // Deploy Flopper
     flopOwnerContract = await flopAbstract.deploy(ownerWallet, [vatAddress, mkrAddress]) as Flopper
-    flopConstract = await flopOwnerContract.connect(userSigner) as Flopper
+    flopContract = await flopOwnerContract.connect(userSigner) as Flopper
     flopAddress = flopOwnerContract.address
 
     // Deploy DaiJoin
@@ -148,7 +148,7 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
       vatAddress,
       daiAddress
     ]) as DaiJoin
-    daiJoinConstract = await daiJoinOwnerContract.connect(userSigner) as DaiJoin
+    daiJoinContract = await daiJoinOwnerContract.connect(userSigner) as DaiJoin
     daiJoinAddress = daiJoinOwnerContract.address
 
     // Deploy Syndicate
@@ -160,7 +160,7 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
       flopAddress,
       {gasLimit: 9000000}
     ]) as DaiBackstopSyndicate
-    syndicateConstract = await syndicateOwnerContract.connect(userSigner) as DaiBackstopSyndicate
+    syndicateContract = await syndicateOwnerContract.connect(userSigner) as DaiBackstopSyndicate
     syndicateAddress = syndicateOwnerContract.address
     // Set Authorities contract
     await mkrOwnerContract.functions.setAuthority(authAddress)
@@ -172,7 +172,7 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
     await vatOwnerContract.suck(ZERO_ADDRESS, daiJoinAddress, user_dai_balance.mul(e27))
 
     // Set user DAI approvals for transfers
-    await daiConstract.functions.approve(syndicateAddress, user_dai_balance)
+    await daiContract.functions.approve(syndicateAddress, user_dai_balance)
     // TO DO
     // Need to set-up DAI_JOIN because right now no-one can dai_join.join()
     // since vat.dai[dai_join] is empty. Tests are failing because of this.
@@ -181,7 +181,7 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
   describe('Getter functions', () => {
     describe('getStatus() function', () => {
       it('should return status', async () => {
-        const status = await syndicateConstract.functions.getStatus()
+        const status = await syndicateContract.functions.getStatus()
         expect(status).to.be.eql(0)
       })
     })
@@ -189,23 +189,23 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
 
   describe('enlist() function', () => {
     it('should PASS if user has enough DAI', async () => {
-      const tx = syndicateConstract.functions.enlist(enlist_amount, TX_PARAM)
+      const tx = syndicateContract.functions.enlist(enlist_amount, TX_PARAM)
       await expect(tx).to.be.fulfilled
     })
 
     it('should REVERT if user does not have enough dai', async () => {
-      const tx = syndicateConstract.functions.enlist(user_dai_balance.add(1))
+      const tx = syndicateContract.functions.enlist(user_dai_balance.add(1))
       await expect(tx).to.be.rejectedWith(RevertError("Dai/insufficient-balance"))
     })
 
     context('When user enlisted', () => {
       let tx;
       beforeEach(async () => {
-        tx = await syndicateConstract.functions.enlist(enlist_amount)
+        tx = await syndicateContract.functions.enlist(enlist_amount)
       })
 
       it('should mint syndicate shares', async () => {
-        let balance = await syndicateConstract.functions.balanceOf(userAddress)
+        let balance = await syndicateContract.functions.balanceOf(userAddress)
         expect(balance).to.be.eql(enlist_amount)
       })
     })
