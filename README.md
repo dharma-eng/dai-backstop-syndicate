@@ -10,21 +10,21 @@ A Community Effort to Ensure a Successful Auction of MKR
 
 ## Context
 
-On Thursday, 12 March, the price of ETH fell precipitously. The price decline caused many vaults in the Multi-Collateral Dai system to become undercollateralized. Many of these undercollateralized loans were liquidated as expected. However, due to a combination of market panic, network congestion, an issue with the price oracle, and attention deficits, some of the vaults were liquidated in exchange for zero DAI. As a result, the Multi-Collateral Dai system currently has a negative surplus. To eliminate this negative surplus, MakerDAO plans to sell MKR tokens in exchange for DAI in a real-time auction to begin on Wednesday 18 March.
+On Thursday, 12 March, the price of ETH fell precipitously. The price decline caused many vaults in the Multi-Collateral Dai system to become undercollateralized. Many of these undercollateralized loans were liquidated as expected. However, due to a combination of market panic, network congestion, an issue with the price oracle, and attention deficits, some of the vaults were liquidated in exchange for zero DAI. As a result, the Multi-Collateral Dai system currently has a negative surplus. To eliminate this negative surplus, MakerDAO plans to sell MKR tokens in exchange for DAI in a real-time auction to begin on Thursday 19 March.
 
 ## [Proposal](https://docs.google.com/document/d/1miS-snhSYBKwjQHM1MOPnLZZl9i2gj3zTcvuQWecV2M/edit#)
 
-We are proposing establishing a pooled auction contract that would give syndicate participants a way to participate in the auction process should the price of MKR (denominated in Dai) fall to, say, 100 DAI / MKR. Anyone could trigger an auction using pooled funds at the given price once the auctions begin, and all participants in the pool would be able to redeem the tokens they minted by supplying Dai for the equivalent Dai / MKR blend held by the pool.
+We have established a pooled auction contract that gives syndicate participants a way to participate in the auction process should the price of MKR (denominated in Dai) fall to 100 DAI / MKR. Anyone can trigger an auction using pooled funds at the given price once the auctions begin, and all participants in the pool will then be able to redeem the tokens they minted by supplying Dai for the equivalent Dai / MKR blend held by the pool.
 
-This contract won’t be designed to provide liquidity for liquidations during flaps (exchanging MKR for DAI the other direction) or flips (exchanging DAI for a vault's collateral). This contract is designed to signal community support for MKR and act as a buyer of last resort during the upcoming MKR auction.
+This contract is not designed to provide liquidity for liquidations during flaps (exchanging MKR for DAI the other direction) or flips (exchanging DAI for a vault's collateral). This contract is designed to signal community support for MKR and act as a buyer of last resort during the upcoming MKR auction.
 
 ## Technical Implementation
 
-The [`DaiBackstopSyndicate`](.//blob/master/contracts/syndicate/DaiBackstopSyndicate.sol) smart contract allows anyone to indicate support for the backstop by depositing Dai with the `enlist` function. This mints an ERC20 token called "DBSv1-100" to represent the share of pooled funds owned by the depositor. Anyone is free to `enlist` to the syndicate until the pool performs the first bid. This first bid is triggered automatically once MKR auctions reach a price point below 100 DAI/MKR. The syndicate will participate in all auctions until the Dai pool is exhausted. A holder of the ERC20 "DBSv1-100" pool token can call `defect` at anytime to withdraw a proportional amount of the pool's remaining Dai and MKR.
+The [`DaiBackstopSyndicate`](.//blob/master/contracts/syndicate/DaiBackstopSyndicate.sol) smart contract allows anyone to indicate support for the backstop by depositing Dai with the `enlist` function. This mints an ERC20 token called "DBSv1-100" to represent the share of pooled funds owned by the depositor. Anyone is free to `enlist` to the syndicate until the pool performs the first bid. This first bid is triggered automatically once MKR auctions reach a price point below 100 DAI/MKR. The syndicate will participate in all auctions until the Dai pool is exhausted. A holder of the ERC20 "DBSv1-100" pool token can call `defect` at anytime to withdraw a proportional amount of the pool's remaining Dai and MKR. There is also a single function, controlled by an owner, called `ceaseFire` that halts all new auctions and deposits _(withdrawals are of course never "halted", though you may not be able to withdraw if the Dai is currently being used for an auction)_.
 
 ## Deployed Contract
 
-<0x....>
+backstopsyndicate.eth => [0x00000000938F41360a846490409500d08919856C](https://etherscan.io/address/backstopsyndicate.eth#code) (Dai Backstop Syndicate v1-100)
 
 ## Group Chat
 
