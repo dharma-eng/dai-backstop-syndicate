@@ -29,3 +29,8 @@ jobs:
 
       - name: Test Compilation
         run: yarn run build
+
+      - name: Unit tests
+        run: |
+          yarn run ganache
+          yarn run test
