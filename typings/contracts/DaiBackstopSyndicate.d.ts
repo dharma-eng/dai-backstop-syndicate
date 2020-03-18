@@ -30,6 +30,8 @@ interface DaiBackstopSyndicateInterface extends Interface {
       encode([]: []): string;
     }>;
 
+    decimals: TypedFunctionDescription<{ encode([]: []): string }>;
+
     decreaseAllowance: TypedFunctionDescription<{
       encode([spender, subtractedValue]: [string, BigNumberish]): string;
     }>;
@@ -40,11 +42,7 @@ interface DaiBackstopSyndicateInterface extends Interface {
       encode([auctionID]: [BigNumberish]): string;
     }>;
 
-    getDaiAddress: TypedFunctionDescription<{ encode([]: []): string }>;
-
     getFlopperAddress: TypedFunctionDescription<{ encode([]: []): string }>;
-
-    getMKRAddress: TypedFunctionDescription<{ encode([]: []): string }>;
 
     getTotalNumberOfAuctions: TypedFunctionDescription<{
       encode([]: []): string;
@@ -58,7 +56,11 @@ interface DaiBackstopSyndicateInterface extends Interface {
 
     isOwner: TypedFunctionDescription<{ encode([]: []): string }>;
 
+    name: TypedFunctionDescription<{ encode([]: []): string }>;
+
     owner: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    symbol: TypedFunctionDescription<{ encode([]: []): string }>;
 
     totalSupply: TypedFunctionDescription<{ encode([]: []): string }>;
 
@@ -97,6 +99,8 @@ interface DaiBackstopSyndicateInterface extends Interface {
     ceaseFire: TypedFunctionDescription<{ encode([]: []): string }>;
 
     getStatus: TypedFunctionDescription<{ encode([]: []): string }>;
+
+    getDaiBalance: TypedFunctionDescription<{ encode([]: []): string }>;
 
     getActiveAuctions: TypedFunctionDescription<{ encode([]: []): string }>;
   };
@@ -170,6 +174,8 @@ export class DaiBackstopSyndicate extends Contract {
       overrides?: TransactionOverrides
     ): Promise<ContractTransaction>;
 
+    decimals(): Promise<number>;
+
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish,
@@ -202,11 +208,7 @@ export class DaiBackstopSyndicate extends Contract {
       4: number;
     }>;
 
-    getDaiAddress(): Promise<string>;
-
     getFlopperAddress(): Promise<string>;
-
-    getMKRAddress(): Promise<string>;
 
     getTotalNumberOfAuctions(): Promise<BigNumber>;
 
@@ -220,7 +222,11 @@ export class DaiBackstopSyndicate extends Contract {
 
     isOwner(): Promise<boolean>;
 
+    name(): Promise<string>;
+
     owner(): Promise<string>;
+
+    symbol(): Promise<string>;
 
     totalSupply(): Promise<BigNumber>;
 
@@ -266,6 +272,8 @@ export class DaiBackstopSyndicate extends Contract {
 
     getStatus(): Promise<number>;
 
+    getDaiBalance(): Promise<BigNumber>;
+
     getActiveAuctions(): Promise<BigNumber[]>;
   };
 
@@ -286,6 +294,8 @@ export class DaiBackstopSyndicate extends Contract {
   cancelOwnershipTransfer(
     overrides?: TransactionOverrides
   ): Promise<ContractTransaction>;
+
+  decimals(): Promise<number>;
 
   decreaseAllowance(
     spender: string,
@@ -319,11 +329,7 @@ export class DaiBackstopSyndicate extends Contract {
     4: number;
   }>;
 
-  getDaiAddress(): Promise<string>;
-
   getFlopperAddress(): Promise<string>;
-
-  getMKRAddress(): Promise<string>;
 
   getTotalNumberOfAuctions(): Promise<BigNumber>;
 
@@ -337,7 +343,11 @@ export class DaiBackstopSyndicate extends Contract {
 
   isOwner(): Promise<boolean>;
 
+  name(): Promise<string>;
+
   owner(): Promise<string>;
+
+  symbol(): Promise<string>;
 
   totalSupply(): Promise<BigNumber>;
 
@@ -383,6 +393,8 @@ export class DaiBackstopSyndicate extends Contract {
 
   getStatus(): Promise<number>;
 
+  getDaiBalance(): Promise<BigNumber>;
+
   getActiveAuctions(): Promise<BigNumber[]>;
 
   filters: {
@@ -415,6 +427,8 @@ export class DaiBackstopSyndicate extends Contract {
 
     cancelOwnershipTransfer(): Promise<BigNumber>;
 
+    decimals(): Promise<BigNumber>;
+
     decreaseAllowance(
       spender: string,
       subtractedValue: BigNumberish
@@ -424,11 +438,7 @@ export class DaiBackstopSyndicate extends Contract {
 
     getCurrentBid(auctionID: BigNumberish): Promise<BigNumber>;
 
-    getDaiAddress(): Promise<BigNumber>;
-
     getFlopperAddress(): Promise<BigNumber>;
-
-    getMKRAddress(): Promise<BigNumber>;
 
     getTotalNumberOfAuctions(): Promise<BigNumber>;
 
@@ -441,7 +451,11 @@ export class DaiBackstopSyndicate extends Contract {
 
     isOwner(): Promise<BigNumber>;
 
+    name(): Promise<BigNumber>;
+
     owner(): Promise<BigNumber>;
+
+    symbol(): Promise<BigNumber>;
 
     totalSupply(): Promise<BigNumber>;
 
@@ -466,6 +480,8 @@ export class DaiBackstopSyndicate extends Contract {
     ceaseFire(): Promise<BigNumber>;
 
     getStatus(): Promise<BigNumber>;
+
+    getDaiBalance(): Promise<BigNumber>;
 
     getActiveAuctions(): Promise<BigNumber>;
   };

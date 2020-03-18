@@ -45,7 +45,7 @@ interface VatInterface extends Interface {
     init: TypedFunctionDescription<{ encode([ilk]: [Arrayish]): string }>;
 
     file: TypedFunctionDescription<{
-      encode([ilk, what, data]: [Arrayish, Arrayish, BigNumberish]): string;
+      encode([what, data]: [Arrayish, BigNumberish]): string;
     }>;
 
     cage: TypedFunctionDescription<{ encode([]: []): string }>;
@@ -196,7 +196,6 @@ export class Vat extends Contract {
     ): Promise<ContractTransaction>;
 
     file(
-      ilk: Arrayish,
       what: Arrayish,
       data: BigNumberish,
       overrides?: TransactionOverrides
@@ -344,7 +343,6 @@ export class Vat extends Contract {
   ): Promise<ContractTransaction>;
 
   file(
-    ilk: Arrayish,
     what: Arrayish,
     data: BigNumberish,
     overrides?: TransactionOverrides
@@ -457,7 +455,7 @@ export class Vat extends Contract {
 
     init(ilk: Arrayish): Promise<BigNumber>;
 
-    file(ilk: Arrayish, what: Arrayish, data: BigNumberish): Promise<BigNumber>;
+    file(what: Arrayish, data: BigNumberish): Promise<BigNumber>;
 
     cage(): Promise<BigNumber>;
 

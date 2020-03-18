@@ -126,7 +126,6 @@ contract DaiBackstopSyndicate is
     // daiRedeemed is the e18 version of vatDaiRedeemed (e45). Needed for dai token, otherwise we keep decimals of vatDai
     daiRedeemed = vatDaiRedeemed / 1e27;
 
-
     // Ensure that sufficient Dai liquidity is currently available to withdraw.
     require(
       vatDaiRedeemed <= vatDaiBalance, "DaiBackstopSyndicate/defect: Insufficient Dai (in use in auctions)"
@@ -205,6 +204,18 @@ contract DaiBackstopSyndicate is
 
   function getStatus() external view returns (Status status) {
     status = _status;
+  }
+
+  /// @notice Return total amount of DAI that is currently held by Syndicate
+  function getDaiBalance() public view returns (uint256 combinedVatDai) {
+        // Determine the Dai currently being used to bid in auctions.
+    uint256 vatDaiLockedInAuctions = _getActiveAuctionVatDaiTotal();
+
+    // Determine the Dai currently locked up on behalf of this contract.
+    uint256 vatDaiBalance = _VAT.dai(address(this));
+
+    // Combine Dai locked in auctions with the balance on the contract.
+    return vatDaiLockedInAuctions.add(vatDaiBalance) / 1e27;
   }
 
   function getActiveAuctions() external view returns (uint256[] memory activeAuctions) {

@@ -1,4 +1,6 @@
 import * as ethers from 'ethers'
+ethers.errors.setLogLevel("error")
+
 
 import {
   AbstractContract,
@@ -17,6 +19,7 @@ import { DaiJoin } from 'typings/contracts/DaiJoin'
 import { MkrAuthority } from 'typings/contracts/MkrAuthority'
 import { DaiBackstopSyndicate } from 'typings/contracts/DaiBackstopSyndicate'
 import { BigNumber } from 'ethers/utils';
+import { Zero } from 'ethers/constants'
 
 // init test wallets from package.json mnemonic
 const web3 = (global as any).web3
@@ -48,6 +51,7 @@ const {
 const e27 = new BigNumber(10).pow(27);
 
 contract('DaiBackstopSyndicate', (accounts: string[]) => {
+
   let ownerAddress: string
   let userAddress: string
 
@@ -93,10 +97,18 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
   let syndicateContract: DaiBackstopSyndicate
   let syndicateAddress: string
 
-  // Parameters
-  let AUCTION_START_TIME: number = 1584490000
-  let user_dai_balance: BigNumber = new BigNumber(50000).mul(decimals)
+  // Enlist Parameters
+  let user_dai_balance: BigNumber = new BigNumber(75000).mul(decimals)
   let enlist_amount: BigNumber = new BigNumber(1000).mul(decimals)
+
+  // Auction parameters
+  let AUCTION_START_TIME: number = 1584490000
+  let tau: number = 2*24*60*60
+
+  // kick
+  let gal: string = ZERO_ADDRESS
+  let lot: BigNumber = new BigNumber(100)
+  let bid: BigNumber = new BigNumber(50000).mul(decimals)
 
   // Ganache is often wrong with gas_estimation when doing cross-contract calls
   // so we use a high hard-coded gasLimit when needed
@@ -168,14 +180,19 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
 
     // Mint some DAI to users
     await daiOwnerContract.functions.mint(userAddress, user_dai_balance)
+
+    // Mint some DAI to users
+    await daiOwnerContract.functions.mint(ownerAddress, user_dai_balance)
+
     // Burden 0 address with sin to generate vatDai for daiJoin, to match the falsely created DAI
-    await vatOwnerContract.suck(ZERO_ADDRESS, daiJoinAddress, user_dai_balance.mul(e27))
+    await vatOwnerContract.suck(ZERO_ADDRESS, daiJoinAddress, user_dai_balance.mul(e27).mul(2))
 
     // Set user DAI approvals for transfers
     await daiContract.functions.approve(syndicateAddress, user_dai_balance)
-    // TO DO
-    // Need to set-up DAI_JOIN because right now no-one can dai_join.join()
-    // since vat.dai[dai_join] is empty. Tests are failing because of this.
+    await daiOwnerContract.functions.approve(syndicateAddress, user_dai_balance)
+
+    // Allow DAI-join to mint DAI
+    await daiOwnerContract.functions.rely(daiJoinAddress)
   })
 
   describe('Getter functions', () => {
@@ -187,26 +204,191 @@ contract('DaiBackstopSyndicate', (accounts: string[]) => {
     })
   })
 
-  describe('enlist() function', () => {
-    it('should PASS if user has enough DAI', async () => {
-      const tx = syndicateContract.functions.enlist(enlist_amount, TX_PARAM)
-      await expect(tx).to.be.fulfilled
-    })
-
-    it('should REVERT if user does not have enough dai', async () => {
-      const tx = syndicateContract.functions.enlist(user_dai_balance.add(1))
-      await expect(tx).to.be.rejectedWith(RevertError("Dai/insufficient-balance"))
-    })
-
-    context('When user enlisted', () => {
-      let tx;
-      beforeEach(async () => {
-        tx = await syndicateContract.functions.enlist(enlist_amount)
+  context('When auction have NOT started', () => {
+    describe('enlist() function', () => {
+      it('should PASS if user has enough DAI', async () => {
+        const tx = syndicateContract.functions.enlist(enlist_amount, TX_PARAM)
+        await expect(tx).to.be.fulfilled
       })
 
-      it('should mint syndicate shares', async () => {
-        let balance = await syndicateContract.functions.balanceOf(userAddress)
-        expect(balance).to.be.eql(enlist_amount)
+      it('should REVERT if user does not have enough dai', async () => {
+        const tx = syndicateContract.functions.enlist(user_dai_balance.add(1))
+        await expect(tx).to.be.rejectedWith(RevertError("Dai/insufficient-balance"))
+      })
+
+      context('When user enlisted', () => {
+        beforeEach(async () => {
+          await syndicateContract.functions.enlist(enlist_amount)
+        })
+
+        it('should mint syndicate shares', async () => {
+          let balance = await syndicateContract.functions.balanceOf(userAddress)
+          expect(balance).to.be.eql(enlist_amount)
+        })
+
+        it('should update combined DAI in syndicate', async () => {
+          let balance = await syndicateContract.functions.getDaiBalance()
+          expect(balance).to.be.eql(enlist_amount)
+        })
+
+        it('should update syndicate VAT syndicate DAI balance', async () => {
+          let vat_balance = await vatContract.functions.dai(syndicateAddress)
+          expect(vat_balance).to.be.eql(enlist_amount.mul(new BigNumber(10).pow(27)))
+        })
+
+        it('should update user DAI balance VAT', async () => {
+          let balance = await daiContract.functions.balanceOf(userAddress)
+          expect(balance).to.be.eql(user_dai_balance.sub(enlist_amount))
+        })
+      })
+    })
+
+    describe('defect() function', () => {
+      it('should FAIL if user did not enlist', async () => {
+        await syndicateOwnerContract.functions.enlist(1)
+        const tx = syndicateContract.functions.defect(enlist_amount, TX_PARAM)
+        await expect(tx).to.be.rejectedWith(RevertError("SafeMath: subtraction overflow"))
+      })
+
+      context('When user enlisted', () => {
+        beforeEach(async () => {
+          await syndicateContract.functions.enlist(enlist_amount)
+        })
+
+        it('should PASS if user withdraws all their DAI', async () => {
+          const tx = syndicateContract.functions.defect(enlist_amount)
+          await expect(tx).to.be.fulfilled
+        })
+
+        context('When user defected', () => {
+          beforeEach(async () => {
+            await syndicateContract.functions.defect(enlist_amount)
+          })
+
+          it('should burn syndicate shares', async () => {
+            let balance = await syndicateContract.functions.balanceOf(userAddress)
+            expect(balance).to.be.eql(Zero)
+          })
+
+          it('should update combined DAI in syndicate', async () => {
+            let balance = await syndicateContract.functions.getDaiBalance()
+            expect(balance).to.be.eql(Zero)
+          })
+
+          it('should update syndicate VAT syndicate DAI balance', async () => {
+            let vat_balance = await vatContract.functions.dai(syndicateAddress)
+            expect(vat_balance).to.be.eql(Zero)
+          })
+
+          it('should update user DAI balance', async () => {
+            let balance = await daiContract.functions.balanceOf(userAddress)
+            expect(balance).to.be.eql(user_dai_balance)
+          })
+        })
+      })
+    })
+    describe('enterAuction() function', () => {
+      it('should FAIL if user did not enlist', async () => {
+        let tx = syndicateContract.functions.enterAuction(1)
+        await expect(tx).to.be.fulfilled // To change for expected error
+      })
+    })
+  })
+
+  context('When auctions HAVE started', () => {
+    beforeEach(async () => {
+      await flopOwnerContract.functions.kick(gal, lot, bid)
+    })
+
+    describe('enlist() function', () => {
+      it('should PASS if user has enough DAI', async () => {
+        const tx = syndicateContract.functions.enlist(enlist_amount, TX_PARAM)
+        await expect(tx).to.be.fulfilled
+      })
+
+      it('should REVERT if user does not have enough dai', async () => {
+        const tx = syndicateContract.functions.enlist(user_dai_balance.add(1))
+        await expect(tx).to.be.rejectedWith(RevertError("Dai/insufficient-balance"))
+      })
+
+      context('When user enlisted', () => {
+        beforeEach(async () => {
+          await syndicateContract.functions.enlist(enlist_amount)
+        })
+
+        it('should mint syndicate shares', async () => {
+          let balance = await syndicateContract.functions.balanceOf(userAddress)
+          expect(balance).to.be.eql(enlist_amount)
+        })
+
+        it('should update combined DAI in syndicate', async () => {
+          let balance = await syndicateContract.functions.getDaiBalance()
+          expect(balance).to.be.eql(enlist_amount)
+        })
+
+        it('should update syndicate VAT syndicate DAI balance', async () => {
+          let vat_balance = await vatContract.functions.dai(syndicateAddress)
+          expect(vat_balance).to.be.eql(enlist_amount.mul(new BigNumber(10).pow(27)))
+        })
+
+        it('should update user DAI balance VAT', async () => {
+          let balance = await daiContract.functions.balanceOf(userAddress)
+          expect(balance).to.be.eql(user_dai_balance.sub(enlist_amount))
+        })
+      })
+    })
+
+    describe('defect() function', () => {
+      it('should FAIL if user did not enlist', async () => {
+        await syndicateOwnerContract.functions.enlist(1)
+        const tx = syndicateContract.functions.defect(enlist_amount, TX_PARAM)
+        await expect(tx).to.be.rejectedWith(RevertError("SafeMath: subtraction overflow"))
+      })
+
+      context('When user enlisted', () => {
+        beforeEach(async () => {
+          await syndicateContract.functions.enlist(enlist_amount)
+        })
+
+        it('should PASS if user withdraws all their DAI', async () => {
+          const tx = syndicateContract.functions.defect(enlist_amount)
+          await expect(tx).to.be.fulfilled
+        })
+
+        context('When user defected', () => {
+          beforeEach(async () => {
+            await syndicateContract.functions.defect(enlist_amount)
+          })
+
+          it('should burn syndicate shares', async () => {
+            let balance = await syndicateContract.functions.balanceOf(userAddress)
+            expect(balance).to.be.eql(Zero)
+          })
+
+          it('should update combined DAI in syndicate', async () => {
+            let balance = await syndicateContract.functions.getDaiBalance()
+            expect(balance).to.be.eql(Zero)
+          })
+
+          it('should update syndicate VAT syndicate DAI balance', async () => {
+            let vat_balance = await vatContract.functions.dai(syndicateAddress)
+            expect(vat_balance).to.be.eql(Zero)
+          })
+
+          it('should update user DAI balance', async () => {
+            let balance = await daiContract.functions.balanceOf(userAddress)
+            expect(balance).to.be.eql(user_dai_balance)
+          })
+        })
+      })
+    })
+
+    
+    describe('enterAuction() function', () => {
+      it('should FAIL if user did not enlist', async () => {
+        await syndicateOwnerContract.functions.enlist(1)
+        const tx = syndicateContract.functions.defect(enlist_amount, TX_PARAM)
+        await expect(tx).to.be.rejectedWith(RevertError("SafeMath: subtraction overflow"))
       })
     })
   })

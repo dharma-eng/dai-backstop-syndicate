@@ -43,6 +43,7 @@
     "lint": "./node_modules/.bin/solhint 'contracts/**/*.sol' && ./node_modules/.bin/solium -d ./contracts --no-soliumignore",
     "clean": "rm -rf build && rm -rf typings/contracts",
     "ganache": "ganache-cli --networkId ${npm_package_config_ganacheNetworkID} --port ${npm_package_config_ganachePort} --gasLimit ${npm_package_config_ganacheGasLimit} --gasPrice ${npm_package_config_ganacheGasPrice} --defaultBalanceEther ${npm_package_config_etherBalance} --deterministic --mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra} > ganache-output.log &",
+    "ganache:verbose": "ganache-cli --networkId ${npm_package_config_ganacheNetworkID} --port ${npm_package_config_ganachePort} --gasLimit ${npm_package_config_ganacheGasLimit} --gasPrice ${npm_package_config_ganacheGasPrice} --defaultBalanceEther ${npm_package_config_etherBalance} --deterministic --mnemonic \"${npm_package_config_mnemonic}\" ${npm_package_config_extra}",
     "gen:contract-typings": "rm -f typings/contracts/* && typechain --target ethers --outDir typings/contracts './build/contracts/*.json'",
     "start": "./node_modules/.bin/ganache-cli --gasLimit 10000000 -e 10000 2>&1 > ganache-output.log & echo 'local chain started.'",
     "test": "tsc -b && truffle test --network ganache build/*.spec.js",

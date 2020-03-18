@@ -18,10 +18,6 @@ interface SimpleFlopperInterface extends Interface {
       encode([]: []): string;
     }>;
 
-    getMKRAddress: TypedFunctionDescription<{ encode([]: []): string }>;
-
-    getDaiAddress: TypedFunctionDescription<{ encode([]: []): string }>;
-
     getFlopperAddress: TypedFunctionDescription<{ encode([]: []): string }>;
 
     getAuctionInformation: TypedFunctionDescription<{ encode([]: []): string }>;
@@ -55,10 +51,6 @@ export class SimpleFlopper extends Contract {
 
     getTotalNumberOfAuctions(): Promise<BigNumber>;
 
-    getMKRAddress(): Promise<string>;
-
-    getDaiAddress(): Promise<string>;
-
     getFlopperAddress(): Promise<string>;
 
     getAuctionInformation(): Promise<{
@@ -91,10 +83,6 @@ export class SimpleFlopper extends Contract {
   isEnabled(): Promise<boolean>;
 
   getTotalNumberOfAuctions(): Promise<BigNumber>;
-
-  getMKRAddress(): Promise<string>;
-
-  getDaiAddress(): Promise<string>;
 
   getFlopperAddress(): Promise<string>;
 
@@ -130,10 +118,6 @@ export class SimpleFlopper extends Contract {
     isEnabled(): Promise<BigNumber>;
 
     getTotalNumberOfAuctions(): Promise<BigNumber>;
-
-    getMKRAddress(): Promise<BigNumber>;
-
-    getDaiAddress(): Promise<BigNumber>;
 
     getFlopperAddress(): Promise<BigNumber>;
 
